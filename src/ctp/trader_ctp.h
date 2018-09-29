@@ -27,6 +27,7 @@ private:
     virtual void OnInit() override;
     virtual void OnIdle() override;
     virtual void OnFinish() override;
+    virtual bool NeedReset() override;
 
     //用户请求处理
     void OnClientReqInsertOrder(CtpActionInsertOrder d);
@@ -41,7 +42,9 @@ private:
 
     //登录相关
     void SendLoginRequest();
+    void ReqAuthenticate();
     void ReqConfirmSettlement();
+    void ReqQrySettlementInfo();
     void ReqQryBank();
     void ReqQryAccountRegister();
     void SetSession(std::string trading_day, int front_id, int session_id, int max_order_ref);
@@ -55,7 +58,6 @@ private:
     std::map<RemoteOrderKey, LocalOrderKey> m_ordermap_remote_local;
     std::string m_trading_day;
     std::mutex m_ordermap_mtx;
-    std::string m_user_file_name;
     bool OrderIdLocalToRemote(const LocalOrderKey& local_order_key, RemoteOrderKey* remote_order_key);
     void OrderIdRemoteToLocal(const RemoteOrderKey& remote_order_key, LocalOrderKey* local_order_key);
     void FindLocalOrderId(const std::string& exchange_id, const std::string& order_sys_id, LocalOrderKey* local_order_key);
@@ -67,14 +69,17 @@ private:
     CThostFtdcTraderApi* m_api;
 
     //查询请求
-    int ReqQryAccount();
-    int ReqQryPosition();
+    int ReqQryAccount(int reqid);
+    int ReqQryPosition(int reqid);
     long long m_next_qry_dt;
     long long m_next_send_dt;
-    std::atomic_bool m_need_login;
-    std::atomic_bool m_need_query_positions;
-    std::atomic_bool m_need_query_account;
+    std::atomic_bool m_logined;
+    std::atomic_int m_req_position_id;
+    std::atomic_int m_rsp_position_id;
+    std::atomic_int m_req_account_id;
+    std::atomic_int m_rsp_account_id;
     std::atomic_bool m_need_query_bank;
     std::atomic_bool m_need_query_register;
+    std::atomic_llong m_req_login_dt;
 };
 }

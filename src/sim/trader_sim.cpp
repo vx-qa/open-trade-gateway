@@ -152,6 +152,8 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 {
     std::string symbol = action_insert_order.exchange_id + "." + action_insert_order.ins_id;
     std::string order_key = action_insert_order.order_id;
+    if(order_key.empty())
+        order_key = std::to_string(duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count());
     auto it = m_data.m_orders.find(order_key);
     if (it != m_data.m_orders.end()) {
         OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:单号重复");
@@ -479,6 +481,8 @@ void TraderSim::UpdatePositionVolume(Position* position)
 
 void TraderSim::LoadUserDataFile()
 {
+    if (m_user_file_path.empty())
+        return;
     //选出最新的一个存档文件
     std::regex my_filter(m_user_id + "\\..+");
     std::vector<std::string> saved_files;
@@ -544,6 +548,8 @@ void TraderSim::LoadUserDataFile()
 
 void TraderSim::SaveUserDataFile()
 {
+    if (m_user_file_path.empty())
+        return;
     std::string fn = m_user_file_path + "/" + m_user_id + "." + g_config.trading_day;
     SerializerTradeBase nss;
     nss.dump_all = true;

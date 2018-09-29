@@ -82,7 +82,8 @@ trader_dll::TransferLog& TraderBase::GetTransferLog(const std::string& seq_id)
 void TraderBase::Start(const ReqLogin& req_login)
 {
     m_running = true;
-    m_user_file_path = g_config.user_file_path + "/" + req_login.bid;
+    if (!g_config.user_file_path.empty())
+        m_user_file_path = g_config.user_file_path + "/" + req_login.bid;
     m_req_login = req_login;
     m_user_id = m_req_login.user_name;
     m_data.user_id = m_user_id;
@@ -96,20 +97,22 @@ void TraderBase::Stop()
 
 void TraderBase::OutputNotify(long notify_code, const std::string& notify_msg, const char* level, const char* type)
 {
-    const char* notify_template = "{"\
-                                  "\"aid\": \"rtn_data\","\
-                                  "\"data\" : ["\
-                                  "{"\
-                                  "\"notify\":{"\
-                                  "\"%d\": {"\
-                                  "\"type\": \"%s\","\
-                                  "\"level\": \"%s\","\
-                                  "\"code\": %d,"\
-                                  "\"content\" : \"%s\""\
-                                  "}}}]}";
-    char buf[1024];
-    sprintf(buf, notify_template, m_notify_seq++, level, type, notify_code, notify_msg.c_str());
-    Output(buf);
+    //构建数据包
+    SerializerTradeBase nss;
+    rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
+    // rapidjson::Value node_user_id;
+    // node_user_id.SetString(m_user_id, nss.m_doc->GetAllocator());
+    rapidjson::Value node_message;
+    node_message.SetObject();
+    node_message.AddMember("type", rapidjson::Value(type, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
+    node_message.AddMember("level", rapidjson::Value(level, nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
+    node_message.AddMember("code", notify_code, nss.m_doc->GetAllocator());
+    node_message.AddMember("content", rapidjson::Value(notify_msg.c_str(), nss.m_doc->GetAllocator()).Move(), nss.m_doc->GetAllocator());
+    rapidjson::Pointer("/data/0/notify/N" + std::to_string(m_notify_seq++)).Set(*nss.m_doc, node_message);
+    std::string json_str;
+    nss.ToString(&json_str);
+    //发送
+    Output(json_str);
 }
 
 void SerializerTradeBase::DefineStruct(ReqLogin& d)

@@ -36,8 +36,14 @@ public:
     ///        0x2003 收到错误报文
     virtual void OnFrontDisconnected(int nReason);
 
+	///客户端认证响应
+	virtual void OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthenticateField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+
     ///登录请求响应
     virtual void OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
+
+	///请求查询投资者结算结果响应
+	virtual void OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     ///报单录入请求响应
     virtual void OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
@@ -89,6 +95,7 @@ public:
 
 private:
     TraderCtp * m_trader;
+    std::string m_settlement_info;
 };
 
 }
