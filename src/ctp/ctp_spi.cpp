@@ -20,27 +20,67 @@ namespace trader_dll
 
 static std::string GuessExchangeId(std::string instrument_id)
 {
+    if (instrument_id.size() > 11) {
+        //组合
+        if ((instrument_id[0] == 'S' && instrument_id[1] == 'P' && instrument_id[2] == 'D')
+        || (instrument_id[0] == 'I' && instrument_id[1] == 'P' && instrument_id[2] == 'S')
+        )
+            return "CZCE";
+        else
+            return "DCE";
+    }
+    if (instrument_id.size() > 8
+        && instrument_id[0] == 'm'
+        && instrument_id[5] == '-'
+        && (instrument_id[6] == 'C' || instrument_id[6] == 'P')
+        && instrument_id[7] == '-'
+    ){
+        //大连期权
+        //"^DCE\.m(\d\d)(\d\d)-([CP])-(\d+)$"
+        return "DCE";
+    }
+    if (instrument_id.size() > 7
+        && instrument_id[0] == 'c'
+        && (instrument_id[6] == 'C' || instrument_id[6] == 'P')
+    ){
+        //上海期权
+        //"^SHFE\.cu(\d\d)(\d\d)([CP])(\d+)$"
+        return "SHFE";
+    }
+    if (instrument_id.size() > 6
+        && instrument_id[0] == 'S'
+        && instrument_id[1] == 'R'
+        && (instrument_id[5] == 'C' || instrument_id[5] == 'P')
+    ){
+        //郑州期权
+        //"CZCE\.SR(\d)(\d\d)([CP])(\d+)"
+        return "CZCE";
+    }
     if (instrument_id.size() == 5
         && instrument_id[0] >= 'A' && instrument_id[0] <= 'Z'
         && instrument_id[1] >= 'A' && instrument_id[1] <= 'Z'
         ) {
+        //郑州期货
         return "CZCE";
     }
     if (instrument_id.size() == 5
         && instrument_id[0] >= 'a' && instrument_id[0] <= 'z'
         && instrument_id[1] >= '0' && instrument_id[1] <= '9'
         ) {
+        //大连期货
         return "DCE";
     }
     if (instrument_id.size() == 5
         && instrument_id[0] >= 'A' && instrument_id[0] <= 'Z'
         ) {
+        //中金期货
         return "CFFEX";
     }
     if (instrument_id.size() == 6
         && instrument_id[0] >= 'A' && instrument_id[0] <= 'Z'
         && instrument_id[1] >= 'A' && instrument_id[1] <= 'Z'
         ) {
+        //中金期货
         return "CFFEX";
     }
     if (instrument_id.size() == 6
@@ -123,11 +163,19 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
     if(g_config.auto_confirm_settlement)
         m_trader->ReqConfirmSettlement();
     else if (m_settlement_info.empty())
-        m_trader->ReqQrySettlementInfo();
+        m_trader->ReqQrySettlementInfoConfirm();
     m_trader->m_req_position_id++;
     m_trader->m_req_account_id++;
     m_trader->m_need_query_bank.store(true);
     m_trader->m_need_query_register.store(true);
+}
+
+void CCtpSpiHandler::OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Log(LOG_INFO, NULL, "ctp OnRspQrySettlementInfoConfirm, instance=%p, UserID=%s, ConfirmDate=%s", m_trader, m_trader->m_user_id.c_str(), pSettlementInfoConfirm?pSettlementInfoConfirm->ConfirmDate:"");
+    if (pSettlementInfoConfirm && std::string(pSettlementInfoConfirm->ConfirmDate) >= m_trader->m_trading_day)
+        return;
+    m_trader->m_need_query_settlement.store(true);
 }
 
 void CCtpSpiHandler::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
@@ -136,8 +184,10 @@ void CCtpSpiHandler::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSett
         return;
     Log(LOG_INFO, NULL, "ctp OnRspQrySettlementInfo, instance=%p, UserID=%s", m_trader, m_trader->m_user_id.c_str());
     m_settlement_info += pSettlementInfo->Content;
-    if(bIsLast)
+    if(bIsLast){
+        m_trader->m_need_query_settlement.store(false);
         m_trader->OutputNotify(0, GBKToUTF8(m_settlement_info.c_str()), "INFO", "SETTLEMENT");
+    }
 }
 
 void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
@@ -283,6 +333,28 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     m_trader->m_req_account_id++;
     m_trader->m_something_changed = true;
     m_trader->SendUserData();
+    //发送下单成功通知
+    if (pOrder->OrderStatus != THOST_FTDC_OST_Canceled 
+     && pOrder->OrderStatus != THOST_FTDC_OST_Unknown 
+     && pOrder->OrderStatus != THOST_FTDC_OST_NoTradeNotQueueing 
+     && pOrder->OrderStatus != THOST_FTDC_OST_PartTradedNotQueueing 
+    ){
+        std::unique_lock<std::mutex> lck(m_trader->m_order_action_mtx);
+        auto it = m_trader->m_insert_order_set.find(pOrder->OrderRef);
+        if (it != m_trader->m_insert_order_set.end()){
+            m_trader->m_insert_order_set.erase(it);
+            m_trader->OutputNotify(1, u8"下单成功");
+        }
+    }
+    if (pOrder->OrderStatus == THOST_FTDC_OST_Canceled
+     && pOrder->VolumeTotal > 0){
+        std::unique_lock<std::mutex> lck(m_trader->m_order_action_mtx);
+        auto it = m_trader->m_cancel_order_set.find(order.order_id);
+        if (it != m_trader->m_cancel_order_set.end()){
+            m_trader->m_cancel_order_set.erase(it);
+            m_trader->OutputNotify(1, u8"撤单成功");
+        }
+    }
 }
 
 void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
@@ -355,8 +427,8 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
     }
     if (!pRspInvestorPosition)
         return;
-    Log(LOG_INFO, NULL, "ctp OnRspQryInvestorPosition, instance=%p, nRequestID=%d, bIsLast=%d, UserID=%s, InstrumentId=%s"
-        , m_trader, nRequestID, bIsLast, m_trader->m_user_id.c_str(), pRspInvestorPosition->InstrumentID);
+    Log(LOG_INFO, NULL, "ctp OnRspQryInvestorPosition, instance=%p, nRequestID=%d, bIsLast=%d, UserID=%s, InstrumentId=%s, ExchangeId=%s"
+        , m_trader, nRequestID, bIsLast, m_trader->m_user_id.c_str(), pRspInvestorPosition->InstrumentID, pRspInvestorPosition->ExchangeID);
     std::lock_guard<std::mutex> lck(m_trader->m_data_mtx);
     std::string exchange_id = GuessExchangeId(pRspInvestorPosition->InstrumentID);
     std::string symbol = exchange_id + "." + pRspInvestorPosition->InstrumentID;
@@ -434,7 +506,9 @@ void CCtpSpiHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspI
     account.close_profit = pRspInvestorAccount->CloseProfit;
     account.commission = pRspInvestorAccount->Commission;
     account.premium = pRspInvestorAccount->CashIn;
-    account.static_balance = pRspInvestorAccount->Balance - pRspInvestorAccount->PositionProfit;
+    account.static_balance = pRspInvestorAccount->PreBalance - pRspInvestorAccount->PreCredit
+                            -pRspInvestorAccount->PreMortgage + pRspInvestorAccount->Mortgage
+                            -pRspInvestorAccount->Withdraw + pRspInvestorAccount->Deposit;
     //当前持仓盈亏
     account.position_profit = pRspInvestorAccount->PositionProfit;
     account.float_profit = 0;
@@ -665,6 +739,7 @@ void CCtpSpiHandler::OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *p
         d.error_msg = GBKToUTF8(pRspTransfer->ErrorMsg);
         m_trader->m_something_changed = true;
         m_trader->SendUserData();
+        m_trader->m_req_account_id++;
     } else {
         m_trader->OutputNotify(pRspTransfer->ErrorID, u8"银期错误, " + GBKToUTF8(pRspTransfer->ErrorMsg));
     }
@@ -687,6 +762,13 @@ void CCtpSpiHandler::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pR
     if (pRspInfo && pRspInfo->ErrorID != 0) {
         m_trader->OutputNotify(pRspInfo->ErrorID, u8"期货资金转银行错误, " + GBKToUTF8(pRspInfo->ErrorMsg));
     }
+}
+
+void CCtpSpiHandler::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo)
+{
+    auto s = GBKToUTF8(pTradingNoticeInfo->FieldContent);
+    if (!s.empty())
+        m_trader->OutputNotify(0, s);
 }
 
 }

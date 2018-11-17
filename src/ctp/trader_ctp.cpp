@@ -37,6 +37,7 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
     m_rsp_position_id.store(0);
     m_need_query_bank.store(false);
     m_need_query_register.store(false);
+    m_need_query_settlement.store(false);
 
     m_peeking_message = false;
     m_something_changed = false;
@@ -99,8 +100,9 @@ void TraderCtp::SendLoginRequest()
     strcpy_x(field.UserID, m_req_login.user_name.c_str());
     strcpy_x(field.Password, m_req_login.password.c_str());
     strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
+    strcpy_x(field.LoginRemark, m_req_login.client_addr.c_str());
     int ret = m_api->ReqUserLogin(&field, 1);
-    Log(LOG_INFO, NULL, "ctp ReqUserLogin, instance=%p, UserID=%s, ret=%d", this, field.UserID, ret);
+    Log(LOG_INFO, NULL, "ctp ReqUserLogin, instance=%p, UserID=%s, LoginRemark=%s, ret=%d", this, field.UserID, field.LoginRemark, ret);
 }
 
 void TraderCtp::ReqAuthenticate()
@@ -132,10 +134,14 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
     rkey.exchange_id = d.f.ExchangeID;
     rkey.instrument_id = d.f.InstrumentID;
     if(OrderIdLocalToRemote(d.local_key, &rkey)){
-        OutputNotify(1, u8"报单order_id重复，不能下单");
+        OutputNotify(1, u8"报单单号重复，不能下单");
         return;
     }
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
+    {
+        std::unique_lock<std::mutex> lck(m_order_action_mtx);
+        m_insert_order_set.insert(d.f.OrderRef);
+    }
     int r = m_api->ReqOrderInsert(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderInsert, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
     SaveToFile();
@@ -163,6 +169,10 @@ void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
     d.f.ActionFlag = THOST_FTDC_AF_Delete;
     d.f.LimitPrice = 0;
     d.f.VolumeChange = 0;
+    {
+        std::unique_lock<std::mutex> lck(m_order_action_mtx);
+        m_cancel_order_set.insert(d.local_key.order_id);
+    }
     int r = m_api->ReqOrderAction(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderAction, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
 }
@@ -234,6 +244,18 @@ void TraderCtp::ReqConfirmSettlement()
     Log(LOG_INFO, NULL, "ctp ReqSettlementInfoConfirm, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
 }
 
+void TraderCtp::ReqQrySettlementInfoConfirm()
+{
+    CThostFtdcQrySettlementInfoConfirmField field;
+    memset(&field, 0, sizeof(field));
+    strcpy_x(field.BrokerID, m_broker_id.c_str());
+    strcpy_x(field.InvestorID, m_user_id.c_str());
+    strcpy_x(field.AccountID, m_user_id.c_str());
+    strcpy_x(field.CurrencyID, "CNY");
+    int r = m_api->ReqQrySettlementInfoConfirm(&field, 0);
+    Log(LOG_INFO, NULL, "ctp ReqQrySettlementInfoConfirm, instance=%p, InvestorID=%s, ret=%d", this, field.InvestorID, r);
+}
+
 void TraderCtp::ReqQrySettlementInfo()
 {
     CThostFtdcQrySettlementInfoField field;
@@ -280,6 +302,11 @@ void TraderCtp::OnIdle()
         return;
     if (!m_logined)
         return;
+    if (m_need_query_settlement.load()) {
+        ReqQrySettlementInfo();
+        m_next_qry_dt = now + 1100;
+        return;
+    }
     if (m_req_position_id > m_rsp_position_id) {
         ReqQryPosition(m_req_position_id);
         m_next_qry_dt = now + 1100;
@@ -502,7 +529,6 @@ void TraderCtp::OnFinish()
 {
     Log(LOG_INFO, NULL, "ctp OnFinish, instance=%p, UserId=%s", this, m_user_id.c_str());
     m_api->Release();
-    delete m_spi;
 }
 
 bool TraderCtp::NeedReset() 

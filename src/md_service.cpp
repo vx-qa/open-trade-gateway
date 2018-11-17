@@ -103,6 +103,7 @@ static struct MdServiceContext
     //发送包管理
     std::string m_req_subscribe_quote;
     std::string m_req_peek_message;
+    bool m_connected;
 
     //工作线程
     std::thread m_worker_thread;
@@ -139,33 +140,66 @@ void SendTextMsg(client* c, websocketpp::connection_hdl hdl, const std::string& 
     }
 }
 
+static bool ReqConnect(client* c)
+{
+    std::string uri = "ws://openmd.shinnytech.com/t/md/front/mobile";
+    websocketpp::lib::error_code ec;
+    client::connection_ptr con = c->get_connection(uri, ec);
+    if (ec) {
+        Log(LOG_ERROR, NULL, "md service create connection fail, reason=%s", ec.message().c_str());
+        return false;
+    }
+    con->append_header("Accept", "application/v1+json");
+    con->append_header("User-Agent", "OTG-" VERSION_STR);
+    c->connect(con);
+    return true;
+}
+
 void OnMessage(client* c, websocketpp::connection_hdl hdl, message_ptr msg) {
     Log(LOG_INFO, NULL, "md service received message, len=%d", msg->get_payload().size());
     SendTextMsg(c, hdl, md_context.m_req_peek_message);
     OnWsMdData(msg->get_payload().c_str());
 }
 
+void Ping(client*c, websocketpp::connection_hdl hdl)
+{
+    Log(LOG_INFO, NULL, "md ping");
+    if (md_context.m_connected){
+        c->ping(hdl, "");
+    }
+    c->set_timer(10000, bind(&Ping, c, hdl));
+}
+
 void OnOpenConnection(client* c, websocketpp::connection_hdl hdl)
 {
-    Log(LOG_INFO, NULL, "md service got connection, session=%p", hdl);
+    Log(LOG_INFO, NULL, "md service got connection");
+    md_context.m_connected = true;
     SendTextMsg(c, hdl, md_context.m_req_subscribe_quote);
     SendTextMsg(c, hdl, md_context.m_req_peek_message);
+    c->set_timer(10000, bind(&Ping, c, hdl));
 }
 
 void OnFailConnection(client* c, websocketpp::connection_hdl hdl)
 {
-    Log(LOG_ERROR, NULL, "md service connection error, session=%p", hdl);
+    Log(LOG_ERROR, NULL, "md service connection error");
+    c->set_timer(10000, bind(&ReqConnect, c));
 }
 
 void OnCloseConnection(client* c, websocketpp::connection_hdl hdl)
 {
-    Log(LOG_ERROR, NULL, "md service connection closed, session=%p", hdl);
+    Log(LOG_ERROR, NULL, "md service connection closed");
+    c->set_timer(10000, bind(&ReqConnect, c));
 }
 
+void OnPongTimeout(client* c, websocketpp::connection_hdl hdl)
+{
+    Log(LOG_ERROR, NULL, "md service pong timeout");
+    md_context.m_connected = false;
+    ReqConnect(c);
+}
 
 void Run()
 {
-    std::string uri = "ws://openmd.shinnytech.com/t/md/front/mobile";
     while(true){
         try {
             client c;
@@ -178,25 +212,18 @@ void Run()
             c.set_open_handler(bind(&OnOpenConnection, &c, ::_1));
             c.set_fail_handler(bind(&OnFailConnection, &c, ::_1));
             c.set_close_handler(bind(&OnCloseConnection, &c, ::_1));
+            c.set_pong_timeout(5000);
+            c.set_pong_timeout_handler(bind(&OnPongTimeout, &c, ::_1));
             c.set_message_handler(bind(&OnMessage, &c, ::_1, ::_2));
-            websocketpp::lib::error_code ec;
-            client::connection_ptr con = c.get_connection(uri, ec);
-            con->append_header("Accept", "application/v1+json");
-            con->append_header("User-Agent", "OTG-" VERSION_STR);
-            if (ec) {
-                Log(LOG_ERROR, NULL, "md service create connection fail, reason=%s", ec.message().c_str());
-                sleep(60000);
+            if (!ReqConnect(&c)){
+                sleep(10000);
                 continue;
             }
-            // Note that connect here only requests a connection. No network messages are
-            // exchanged until the event loop starts running in the next line.
-            c.connect(con);
-
             // Start the ASIO io_service run loop
             // this will cause a single connection to be made to the server. c.run()
             // will exit when this connection is closed.
             c.run();
-            sleep(60000);
+            sleep(10000);
         } catch (websocketpp::exception const & e) {
             Log(LOG_ERROR, NULL, "md service websocket exception, what=%s", e.what());
         }
@@ -232,6 +259,7 @@ bool Init()
     }
     md_context.m_req_peek_message = "{\"aid\":\"peek_message\"}";
     md_context.m_req_subscribe_quote = "{\"aid\": \"subscribe_quote\", \"ins_list\": \"" + ins_list + "\"}";
+    md_context.m_connected = false;
     md_context.m_worker_thread = std::thread(Run);
     return true;
 }
