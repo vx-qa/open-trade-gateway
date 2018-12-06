@@ -41,6 +41,9 @@ TraderCtp::TraderCtp(std::function<void(const std::string&)> callback)
 
     m_peeking_message = false;
     m_something_changed = false;
+
+    memset(&m_input_order, 0, sizeof(m_input_order));
+    memset(&m_action_order, 0, sizeof(m_action_order));
 }
 
 void TraderCtp::ProcessInput(const char* json_str)
@@ -142,6 +145,7 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
         std::unique_lock<std::mutex> lck(m_order_action_mtx);
         m_insert_order_set.insert(d.f.OrderRef);
     }
+    memcpy(&m_input_order, &d.f, sizeof(m_input_order));
     int r = m_api->ReqOrderInsert(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderInsert, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
     SaveToFile();
@@ -173,6 +177,7 @@ void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
         std::unique_lock<std::mutex> lck(m_order_action_mtx);
         m_cancel_order_set.insert(d.local_key.order_id);
     }
+    memcpy(&m_action_order, &d.f, sizeof(m_action_order));
     int r = m_api->ReqOrderAction(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderAction, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
 }
@@ -302,11 +307,6 @@ void TraderCtp::OnIdle()
         return;
     if (!m_logined)
         return;
-    if (m_need_query_settlement.load()) {
-        ReqQrySettlementInfo();
-        m_next_qry_dt = now + 1100;
-        return;
-    }
     if (m_req_position_id > m_rsp_position_id) {
         ReqQryPosition(m_req_position_id);
         m_next_qry_dt = now + 1100;
@@ -314,6 +314,11 @@ void TraderCtp::OnIdle()
     }
     if (m_req_account_id > m_rsp_account_id) {
         ReqQryAccount(m_req_account_id);
+        m_next_qry_dt = now + 1100;
+        return;
+    }
+    if (m_need_query_settlement.load()) {
+        ReqQrySettlementInfo();
         m_next_qry_dt = now + 1100;
         return;
     }
@@ -342,6 +347,8 @@ void TraderCtp::SendUserData()
     if (!m_peeking_message)
         return;
     if (m_data.m_accounts.size() == 0)
+        return;
+    if (!m_position_ready)
         return;
     //重算所有持仓项的持仓盈亏和浮动盈亏
     double total_position_profit = 0;
@@ -404,6 +411,7 @@ void TraderCtp::SendUserData()
     if (!m_something_changed)
         return;
     //构建数据包
+    m_data.m_trade_more_data = false;
     SerializerTradeBase nss;
     rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
     rapidjson::Value node_data;

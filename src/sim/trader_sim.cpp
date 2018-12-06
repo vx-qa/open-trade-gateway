@@ -59,6 +59,12 @@ void SerializerSim::DefineStruct(ActionOrder& d)
     AddItem(d.limit_price, "limit_price");
 }
 
+void SerializerSim::DefineStruct(ActionTransfer& d)
+{
+    AddItem(d.currency, "currency");
+    AddItem(d.amount, "amount");
+}
+
 TraderSim::TraderSim(std::function<void(const std::string&)> callback)
     : TraderBase(callback)
 {
@@ -91,6 +97,10 @@ void TraderSim::OnInit()
         m_account->risk_ratio = 0;
         m_account->changed = true;
     }
+    auto bank = &(m_data.m_banks["SIM"]);
+    bank->bank_id="SIM";
+    bank->bank_name = u8"模拟银行";
+    bank->changed = true;
     m_something_changed = true;
     char json_str[1024];
     sprintf(json_str, (u8"{"\
@@ -124,8 +134,10 @@ void TraderSim::ProcessInput(const char* json_str)
         ActionOrder action_cancel_order;
         ss.ToVar(action_cancel_order);
         OnClientReqCancelOrder(action_cancel_order);
-    // } else if (aid == "req_transfer") {
-    //     OnClientReqTransfer();
+    } else if (aid == "req_transfer") {
+        ActionTransfer action_transfer;
+        ss.ToVar(action_transfer);
+        OnClientReqTransfer(action_transfer);
     } else if (aid == "peek_message") {
         OnClientPeekMessage();
     }
@@ -139,7 +151,6 @@ void TraderSim::OnFinish()
 
 void TraderSim::OnIdle()
 {
-    //有空的时候, 标记为需查询的项, 如果离上次查询时间够远, 应该发起查询
     long long now = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
     if (m_peeking_message && (m_next_send_dt < now)){
         m_next_send_dt = now + 100;
@@ -150,14 +161,15 @@ void TraderSim::OnIdle()
 void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
 {
     std::string symbol = action_insert_order.exchange_id + "." + action_insert_order.ins_id;
+    if(action_insert_order.order_id.empty())
+        action_insert_order.order_id = std::to_string(duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count());
     std::string order_key = action_insert_order.order_id;
-    if(order_key.empty())
-        order_key = std::to_string(duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count());
     auto it = m_data.m_orders.find(order_key);
     if (it != m_data.m_orders.end()) {
         OutputNotify(1, u8"下单, 已被服务器拒绝, 原因:单号重复");
         return;
     }
+    m_something_changed = true;
     const md_service::Instrument* ins = md_service::GetInstrument(symbol);
     Order* order = &(m_data.m_orders[order_key]);
     order->user_id = action_insert_order.user_id;
@@ -204,8 +216,8 @@ void TraderSim::OnClientReqInsertOrder(ActionOrder action_insert_order)
     }
     Position* position = &(m_data.m_positions[symbol]);
     position->ins = ins;
-    position->instrument_id = ins->ins_id;
-    position->exchange_id = ins->exchange_id;
+    position->instrument_id = order->instrument_id;
+    position->exchange_id = order->exchange_id;
     position->user_id = m_user_id;
     if (action_insert_order.offset == kOffsetOpen) {
         if (position->ins->margin * action_insert_order.volume > m_account->available) {
@@ -238,11 +250,25 @@ void TraderSim::OnClientReqCancelOrder(ActionOrder action_cancel_order)
             && order->status == kOrderStatusAlive) {
             order->status = kOrderStatusFinished;
             UpdateOrder(order);
+            m_something_changed = true;
             return;
         }
     }
     OutputNotify(1, u8"要撤销的单不存在");
     return;
+}
+
+void TraderSim::OnClientReqTransfer(ActionTransfer action_transfer)
+{
+    if(action_transfer.amount > 0){
+        m_account->deposit += action_transfer.amount;
+    } else {
+        m_account->withdraw -= action_transfer.amount;
+    }
+    m_account->static_balance += action_transfer.amount;
+    m_account->changed = true;
+    m_something_changed = true;
+    SendUserData();
 }
 
 void TraderSim::OnClientPeekMessage()
@@ -274,7 +300,7 @@ void TraderSim::SendUserData()
         double last_price = ps.ins->last_price;
         if (!IsValid(last_price))
             last_price = ps.ins->pre_settlement;
-        if (last_price != ps.last_price || ps.changed) {
+        if ((IsValid(last_price) && (last_price != ps.last_price)) || ps.changed) {
             ps.last_price = last_price;
             ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
             ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
@@ -310,6 +336,7 @@ void TraderSim::SendUserData()
     if (!m_something_changed)
         return;
     //构建数据包
+    m_data.m_trade_more_data = false;
     SerializerTradeBase nss;
     rapidjson::Pointer("/aid").Set(*nss.m_doc, "rtn_data");
     rapidjson::Value node_data;
