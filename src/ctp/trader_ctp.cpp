@@ -72,6 +72,11 @@ void TraderCtp::ProcessInput(const char* json_str)
         OnClientReqTransfer(f);
     } else if (aid == "confirm_settlement") {
         ReqConfirmSettlement();
+    } else if (aid == "change_password") {
+        CThostFtdcUserPasswordUpdateField f;
+        memset(&f, 0, sizeof(f));
+        ss.ToVar(f);
+        OnClientReqChangePassword(f);
     }
 }
 
@@ -127,7 +132,7 @@ void TraderCtp::ReqAuthenticate()
 void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 {
     if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
-        OutputNotify(1, u8"报单user_id错误，不能下单");
+        OutputNotify(1, u8"报单user_id错误，不能下单", "WARNING");
         return;
     }
     strcpy_x(d.f.BrokerID, m_broker_id.c_str());
@@ -137,7 +142,7 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
     rkey.exchange_id = d.f.ExchangeID;
     rkey.instrument_id = d.f.InstrumentID;
     if(OrderIdLocalToRemote(d.local_key, &rkey)){
-        OutputNotify(1, u8"报单单号重复，不能下单");
+        OutputNotify(1, u8"报单单号重复，不能下单", "WARNING");
         return;
     }
     strcpy_x(d.f.OrderRef, rkey.order_ref.c_str());
@@ -154,12 +159,12 @@ void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 {
     if(d.local_key.user_id.substr(0, m_user_id.size()) != m_user_id){
-        OutputNotify(1, u8"撤单user_id错误，不能撤单");
+        OutputNotify(1, u8"撤单user_id错误，不能撤单", "WARNING");
         return;
     }
     RemoteOrderKey rkey;
     if (!OrderIdLocalToRemote(d.local_key, &rkey)){
-        OutputNotify(1, u8"撤单指定的order_id不存在，不能撤单");
+        OutputNotify(1, u8"撤单指定的order_id不存在，不能撤单", "WARNING");
         return;
     }
     strcpy_x(d.f.BrokerID, m_broker_id.c_str());
@@ -180,6 +185,15 @@ void TraderCtp::OnClientReqCancelOrder(CtpActionCancelOrder d)
     memcpy(&m_action_order, &d.f, sizeof(m_action_order));
     int r = m_api->ReqOrderAction(&d.f, 0);
     Log(LOG_INFO, NULL, "ctp ReqOrderAction, instance=%p, InvestorID=%s, InstrumentID=%s, OrderRef=%s, ret=%d", this, d.f.InvestorID, d.f.InstrumentID, d.f.OrderRef, r);
+}
+
+void TraderCtp::OnClientReqChangePassword(CThostFtdcUserPasswordUpdateField f)
+{
+    strcpy_x(f.BrokerID, m_broker_id.c_str());
+    strcpy_x(f.UserID, m_user_id.c_str());
+    int r = m_api->ReqUserPasswordUpdate(&f, 0);
+    Log(LOG_INFO, NULL, "ctp ReqUserPasswordUpdate, instance=%p, ret=%d"
+        , this, r);
 }
 
 void TraderCtp::OnClientReqTransfer(CThostFtdcReqTransferField f)

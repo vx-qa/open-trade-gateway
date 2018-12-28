@@ -150,7 +150,7 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
     m_trader->m_position_ready = false;
     m_trader->m_req_login_dt.store(0);
     if (pRspInfo->ErrorID != 0){
-        m_trader->OutputNotify(pRspInfo->ErrorID, u8"交易服务器登录失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"交易服务器登录失败, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
         return;
     }
     m_trader->SetSession(pRspUserLogin->TradingDay, pRspUserLogin->FrontID, pRspUserLogin->SessionID, atoi(pRspUserLogin->MaxOrderRef));
@@ -176,6 +176,18 @@ void CCtpSpiHandler::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, 
     m_trader->m_req_account_id++;
     m_trader->m_need_query_bank.store(true);
     m_trader->m_need_query_register.store(true);
+}
+
+void CCtpSpiHandler::OnRspUserPasswordUpdate(CThostFtdcUserPasswordUpdateField *pUserPasswordUpdate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Log(LOG_INFO, NULL, "ctp OnRspUserPasswordUpdate, instance=%p, UserID=%s", m_trader, m_trader->m_user_id.c_str());
+    if (!pRspInfo)
+        return;
+    if (pRspInfo->ErrorID == 0){
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"修改密码成功");
+    }else{
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"修改密码失败, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
+    }
 }
 
 void CCtpSpiHandler::OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
@@ -222,7 +234,6 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
     auto ins = md_service::GetInstrument(order.symbol());
     if (!ins){
         Log(LOG_ERROR, NULL, "ctp OnRtnOrder, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), order.symbol().c_str());
-        m_trader->OutputNotify(1, u8"交易账户中的合约" + order.symbol() + u8"不在合约表中");
         return;
     }
     switch (pOrder->Direction)
@@ -365,7 +376,7 @@ void CCtpSpiHandler::OnRtnOrder(CThostFtdcOrderField* pOrder)
             auto it2 = m_trader->m_insert_order_set.find(pOrder->OrderRef);
             if (it2 != m_trader->m_insert_order_set.end()){
                 m_trader->m_insert_order_set.erase(it2);
-                m_trader->OutputNotify(1, u8"下单失败, " + order.last_msg);
+                m_trader->OutputNotify(1, u8"下单失败, " + order.last_msg, "WARNING");
             }
         }
     }
@@ -389,7 +400,6 @@ void CCtpSpiHandler::OnRtnTrade(CThostFtdcTradeField* pTrade)
     auto ins = md_service::GetInstrument(trade.symbol());
     if (!ins){
         Log(LOG_ERROR, NULL, "ctp OnRtnTrade, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), trade.symbol().c_str());
-        m_trader->OutputNotify(1, u8"交易账户中的合约" + trade.symbol() + u8"不在合约表中");
         return;
     }
     switch (pTrade->Direction)
@@ -445,7 +455,6 @@ void CCtpSpiHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* p
         auto ins = md_service::GetInstrument(symbol);
         if (!ins){
             Log(LOG_ERROR, NULL, "ctp OnRspQryInvestorPosition, instrument not exist, instance=%p, UserID=%s, symbol=%s", m_trader, m_trader->m_user_id.c_str(), symbol.c_str());
-            m_trader->OutputNotify(1, u8"交易账户中的合约" + std::string(symbol) + u8"不在合约表中");
             return;
         }
         Position& position = m_trader->GetPosition(symbol);
@@ -686,7 +695,7 @@ void CCtpSpiHandler::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CT
         order.changed = true;
         m_trader->m_something_changed = true;
         m_trader->SendUserData();
-        m_trader->OutputNotify(pRspInfo->ErrorID, u8"下单失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"下单失败, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
     }
 }
 
@@ -694,7 +703,7 @@ void CCtpSpiHandler::OnRspOrderAction(CThostFtdcInputOrderActionField* pOrderAct
 {
     Log(LOG_INFO, NULL, "ctp OnRspOrderAction, instance=%p, UserID=%s, ErrorID=%d", m_trader, m_trader->m_user_id.c_str(), pRspInfo?pRspInfo->ErrorID:-999);
     if (pRspInfo->ErrorID != 0)
-        m_trader->OutputNotify(pRspInfo->ErrorID, u8"撤单失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"撤单失败, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
 }
 
 void CCtpSpiHandler::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo)
@@ -705,7 +714,7 @@ void CCtpSpiHandler::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder,
         );
     if (pInputOrder && pRspInfo && pRspInfo->ErrorID != 0){
         if (memcmp(&m_trader->m_input_order, pInputOrder, sizeof(m_trader->m_input_order)) == 0)
-            m_trader->OutputNotify(pRspInfo->ErrorID, u8"下单失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+            m_trader->OutputNotify(pRspInfo->ErrorID, u8"下单失败, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
     }
 }
 
@@ -717,7 +726,7 @@ void CCtpSpiHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderActio
         );
     if (pOrderAction && pRspInfo && pRspInfo->ErrorID != 0){
         if (memcmp(&m_trader->m_action_order, pOrderAction, sizeof(m_trader->m_input_order)) == 0)
-            m_trader->OutputNotify(pRspInfo->ErrorID, u8"撤单失败, " + GBKToUTF8(pRspInfo->ErrorMsg));
+            m_trader->OutputNotify(pRspInfo->ErrorID, u8"撤单失败, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
     }
 }
 
@@ -768,7 +777,7 @@ void CCtpSpiHandler::OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *p
         m_trader->SendUserData();
         m_trader->m_req_account_id++;
     } else {
-        m_trader->OutputNotify(pRspTransfer->ErrorID, u8"银期错误, " + GBKToUTF8(pRspTransfer->ErrorMsg));
+        m_trader->OutputNotify(pRspTransfer->ErrorID, u8"银期错误, " + GBKToUTF8(pRspTransfer->ErrorMsg), "WARNING");
     }
 }
 
@@ -780,14 +789,14 @@ void CCtpSpiHandler::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *p
 void CCtpSpiHandler::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
 {
     if (pRspInfo && pRspInfo->ErrorID != 0) {
-        m_trader->OutputNotify(pRspInfo->ErrorID, u8"银行资金转期货错误, " + GBKToUTF8(pRspInfo->ErrorMsg));
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"银行资金转期货错误, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
     }
 }
 
 void CCtpSpiHandler::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
 {
     if (pRspInfo && pRspInfo->ErrorID != 0) {
-        m_trader->OutputNotify(pRspInfo->ErrorID, u8"期货资金转银行错误, " + GBKToUTF8(pRspInfo->ErrorMsg));
+        m_trader->OutputNotify(pRspInfo->ErrorID, u8"期货资金转银行错误, " + GBKToUTF8(pRspInfo->ErrorMsg), "WARNING");
     }
 }
 
