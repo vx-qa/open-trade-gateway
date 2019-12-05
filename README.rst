@@ -201,13 +201,12 @@ Test
 
 3、条件单服务配置文件修改后需要重启交易系统,open-trade-gateway只会在启动时加载config-condition-order.json配置文件;
 
-
 Docker
-
+-------------------------------------------------
 1、启动open-trade-gateway
 ::
 
-docker-compose up
+docker-compose up -d
 
 2、用任意websocket client 连接到服务端口，应该收到这样的信息:
 ::
