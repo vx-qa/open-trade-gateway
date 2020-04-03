@@ -111,7 +111,7 @@ void traderctp::ProcessOnFrontConnected()
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
 			.WithField("ret",ret)
-			.Log(LOG_WARNING,"ctp ReqAuthenticate fail");		
+			.Log(LOG_WARNING,"ctpsopt ReqAuthenticate fail");		
 	}
 }
 
@@ -121,7 +121,7 @@ void traderctp::OnFrontConnected()
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)		
-		.Log(LOG_INFO,"ctp OnFrontConnected");
+		.Log(LOG_INFO,"ctpsopt OnFrontConnected");
 	
 	//还在等待登录阶段
 	if (!m_b_login.load())
@@ -153,7 +153,7 @@ void traderctp::ProcessOnFrontDisconnected(int nReason)
 		.WithField("bid", _req_login.bid)
 		.WithField("user_name", _req_login.user_name)
 		.WithField("reason", nReason)	
-		.Log(LOG_INFO, "ctp OnFrontDisconnected");
+		.Log(LOG_INFO, "ctpsopt OnFrontDisconnected");
 }
 
 void traderctp::OnFrontDisconnected(int nReason)
@@ -166,7 +166,7 @@ void traderctp::OnFrontDisconnected(int nReason)
 			.WithField("bid", _req_login.bid)
 			.WithField("user_name", _req_login.user_name)
 			.WithField("reason", nReason)
-			.Log(LOG_INFO, "ctp OnFrontDisconnected");
+			.Log(LOG_INFO, "ctpsopt OnFrontDisconnected");
 
 		OutputNotifySycn(m_loging_connectId,322,u8"已经断开与交易前置的连接");
 	}
@@ -216,7 +216,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspAuthenticate msg");
+			.Log(LOG_INFO,"ctpsopt OnRspAuthenticate msg");
 	}
 	else
 	{
@@ -228,7 +228,7 @@ void traderctp::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthentica
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO, "ctp OnRspAuthenticate msg");
+			.Log(LOG_INFO, "ctpsopt OnRspAuthenticate msg");
 	}
 	
 	//还在等待登录阶段
@@ -382,7 +382,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspUserLogin msg");		
+			.Log(LOG_INFO,"ctpsopt OnRspUserLogin msg");		
 	}
 	else
 	{
@@ -394,7 +394,7 @@ void traderctp::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO, "ctp OnRspUserLogin msg");
+			.Log(LOG_INFO, "ctpsopt OnRspUserLogin msg");
 	}
 
 	//还在等待登录阶段
@@ -486,7 +486,7 @@ void traderctp::OnRspQrySettlementInfoConfirm(
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspQrySettlementInfoConfirm msg");		
+			.Log(LOG_INFO,"ctpsopt OnRspQrySettlementInfoConfirm msg");		
 	}
 	else
 	{
@@ -498,7 +498,7 @@ void traderctp::OnRspQrySettlementInfoConfirm(
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspQrySettlementInfoConfirm msg");		
+			.Log(LOG_INFO,"ctpsopt OnRspQrySettlementInfoConfirm msg");		
 	}
 
 	std::shared_ptr<CThostFtdcSettlementInfoConfirmField> ptr = nullptr;
@@ -622,7 +622,7 @@ void traderctp::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlemen
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspQrySettlementInfo msg");		
+			.Log(LOG_INFO,"ctpsopt OnRspQrySettlementInfo msg");		
 	}
 	else
 	{
@@ -634,7 +634,7 @@ void traderctp::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlemen
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspQrySettlementInfo msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQrySettlementInfo msg");
 	}
 
 	if (nullptr == pSettlementInfo)
@@ -687,7 +687,7 @@ void traderctp::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField 
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspSettlementInfoConfirm msg");		
+			.Log(LOG_INFO,"ctpsopt OnRspSettlementInfoConfirm msg");		
 	}
 	else
 	{
@@ -699,7 +699,7 @@ void traderctp::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField 
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)		
-			.Log(LOG_INFO,"ctp OnRspSettlementInfoConfirm msg");
+			.Log(LOG_INFO,"ctpsopt OnRspSettlementInfoConfirm msg");
 
 		return;
 	}
@@ -756,7 +756,7 @@ void traderctp::OnRspUserPasswordUpdate(
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspUserPasswordUpdate msg");		
+			.Log(LOG_INFO,"ctpsopt OnRspUserPasswordUpdate msg");		
 	}
 	else
 	{
@@ -768,7 +768,7 @@ void traderctp::OnRspUserPasswordUpdate(
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspUserPasswordUpdate msg");
+			.Log(LOG_INFO,"ctpsopt OnRspUserPasswordUpdate msg");
 	}
 
 	std::shared_ptr<CThostFtdcUserPasswordUpdateField> ptr1 = nullptr;
@@ -960,7 +960,7 @@ void traderctp::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspOrderInsert msg");		
+			.Log(LOG_INFO,"ctpsopt OnRspOrderInsert msg");		
 	}
 	else
 	{
@@ -972,7 +972,7 @@ void traderctp::OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO, "ctp OnRspOrderInsert msg");
+			.Log(LOG_INFO, "ctpsopt OnRspOrderInsert msg");
 	}
 
 	std::shared_ptr<CThostFtdcInputOrderField> ptr1 = nullptr;
@@ -1018,7 +1018,7 @@ void traderctp::OnRspOrderAction(CThostFtdcInputOrderActionField* pInputOrderAct
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspOrderAction msg");
+			.Log(LOG_INFO,"ctpsopt OnRspOrderAction msg");
 	}
 	else
 	{
@@ -1030,7 +1030,7 @@ void traderctp::OnRspOrderAction(CThostFtdcInputOrderActionField* pInputOrderAct
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspOrderAction msg");
+			.Log(LOG_INFO,"ctpsopt OnRspOrderAction msg");
 	}
 
 	std::shared_ptr<CThostFtdcInputOrderActionField> ptr1 = nullptr;
@@ -1237,7 +1237,7 @@ void traderctp::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 				.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
 				.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
 				.WithPack("ctp_pack",strMsg)
-				.Log(LOG_INFO,"ctp OnErrRtnOrderInsert msg");
+				.Log(LOG_INFO,"ctpsopt OnErrRtnOrderInsert msg");
 		}
 	}
 	else
@@ -1248,7 +1248,7 @@ void traderctp::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 			.WithField("user_name",_req_login.user_name)
 			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
-			.Log(LOG_INFO,"ctp OnErrRtnOrderInsert msg");
+			.Log(LOG_INFO,"ctpsopt OnErrRtnOrderInsert msg");
 	}
 
 	std::shared_ptr<CThostFtdcInputOrderField> ptr1 = nullptr;
@@ -1314,7 +1314,7 @@ void traderctp::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction
 				.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
 				.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 				.WithPack("ctp_pack",strMsg)
-				.Log(LOG_INFO,"ctp OnErrRtnOrderAction msg");
+				.Log(LOG_INFO,"ctpsopt OnErrRtnOrderAction msg");
 		}
 	}
 	else
@@ -1325,7 +1325,7 @@ void traderctp::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction
 			.WithField("user_name",_req_login.user_name)
 			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
-			.Log(LOG_INFO,"ctp OnErrRtnOrderAction msg");
+			.Log(LOG_INFO,"ctpsopt OnErrRtnOrderAction msg");
 	}
 
 	std::shared_ptr<CThostFtdcOrderActionField> ptr1 = nullptr;
@@ -1355,7 +1355,7 @@ void traderctp::ProcessQryInvestorPosition(
 			exchange_id=GuessExchangeId(pRspInvestorPosition->InstrumentID);
 		}		
 		std::string symbol = exchange_id + "." + pRspInvestorPosition->InstrumentID;
-		/*auto ins = GetInstrument(symbol);
+		auto ins = GetInstrument(symbol);
 		if (nullptr==ins)
 		{
 			Log().WithField("fun","ProcessQryInvestorPosition")
@@ -1370,72 +1370,29 @@ void traderctp::ProcessQryInvestorPosition(
 				.WithField("RequestID",nRequestID)							
 				.Log(LOG_WARNING,"instrument is null when ProcessQryInvestorPosition");			
 		}
-		else*/
-		{
-			bool b_has_td_yd_distinct = (exchange_id == "SHFE") || (exchange_id == "INE");
+		else
+		{		
 			Position& position = GetPosition(exchange_id,pRspInvestorPosition->InstrumentID, pRspInvestorPosition->InvestorID);		
 			if (pRspInvestorPosition->PosiDirection == THOST_FTDC_PD_Long)
 			{
-				if (!b_has_td_yd_distinct)
-				{
-					position.volume_long_yd = pRspInvestorPosition->YdPosition;
-				}
-				else
-				{
-					if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_History)
-					{
-						position.volume_long_yd = pRspInvestorPosition->YdPosition;
-					}
-				}				
-				if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today)
-				{
-					position.volume_long_today = pRspInvestorPosition->Position;
-					position.volume_long_frozen_today = pRspInvestorPosition->ShortFrozen;
-					position.position_cost_long_today = pRspInvestorPosition->PositionCost;
-					position.open_cost_long_today = pRspInvestorPosition->OpenCost;
-					position.margin_long_today = pRspInvestorPosition->UseMargin;
-				}
-				else
-				{
-					position.volume_long_his = pRspInvestorPosition->Position;
-					position.volume_long_frozen_his = pRspInvestorPosition->ShortFrozen;
-					position.position_cost_long_his = pRspInvestorPosition->PositionCost;
-					position.open_cost_long_his = pRspInvestorPosition->OpenCost;
-					position.margin_long_his = pRspInvestorPosition->UseMargin;
-				}
+				position.volume_long_yd = pRspInvestorPosition->YdPosition;
+				position.volume_long_today = pRspInvestorPosition->Position;
+				position.volume_long_frozen_today = pRspInvestorPosition->ShortFrozen;
+				position.position_cost_long_today = pRspInvestorPosition->PositionCost;
+				position.open_cost_long_today = pRspInvestorPosition->OpenCost;
+				position.margin_long_today = pRspInvestorPosition->UseMargin;
 				position.position_cost_long = position.position_cost_long_today + position.position_cost_long_his;
 				position.open_cost_long = position.open_cost_long_today + position.open_cost_long_his;
 				position.margin_long = position.margin_long_today + position.margin_long_his;
 			}
 			else
 			{
-				if (!b_has_td_yd_distinct)
-				{
-					position.volume_short_yd = pRspInvestorPosition->YdPosition;
-				}
-				else
-				{
-					if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_History)
-					{
-						position.volume_short_yd = pRspInvestorPosition->YdPosition;
-					}
-				}
-				if (pRspInvestorPosition->PositionDate == THOST_FTDC_PSD_Today)
-				{
-					position.volume_short_today = pRspInvestorPosition->Position;
-					position.volume_short_frozen_today = pRspInvestorPosition->LongFrozen;
-					position.position_cost_short_today = pRspInvestorPosition->PositionCost;
-					position.open_cost_short_today = pRspInvestorPosition->OpenCost;
-					position.margin_short_today = pRspInvestorPosition->UseMargin;
-				}
-				else
-				{
-					position.volume_short_his = pRspInvestorPosition->Position;
-					position.volume_short_frozen_his = pRspInvestorPosition->LongFrozen;
-					position.position_cost_short_his = pRspInvestorPosition->PositionCost;
-					position.open_cost_short_his = pRspInvestorPosition->OpenCost;
-					position.margin_short_his = pRspInvestorPosition->UseMargin;
-				}
+				position.volume_short_yd = pRspInvestorPosition->YdPosition;
+				position.volume_short_today = pRspInvestorPosition->Position;
+				position.volume_short_frozen_today = pRspInvestorPosition->LongFrozen;
+				position.position_cost_short_today = pRspInvestorPosition->PositionCost;
+				position.open_cost_short_today = pRspInvestorPosition->OpenCost;
+				position.margin_short_today = pRspInvestorPosition->UseMargin;
 				position.position_cost_short = position.position_cost_short_today + position.position_cost_short_his;
 				position.open_cost_short = position.open_cost_short_today + position.open_cost_short_his;
 				position.margin_short = position.margin_short_today + position.margin_short_his;
@@ -1568,7 +1525,7 @@ void traderctp::AdjustPositionByTrade(const Trade& trade)
 				.WithField("pos_short_his",pos.pos_short_his)
 				.WithField("pos_long_today",pos.pos_long_today)
 				.WithField("pos_long_his",pos.pos_long_his)
-				.Log(LOG_ERROR,"ctp AdjustPositionByTrade error");			
+				.Log(LOG_ERROR,"ctpsopt AdjustPositionByTrade error");			
 			return;
 		}
 		if (pos.pos_short_today < 0)
@@ -1637,7 +1594,7 @@ void traderctp::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pInves
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspQryInvestorPosition msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryInvestorPosition msg");
 	}
 	else
 	{
@@ -1649,7 +1606,7 @@ void traderctp::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pInves
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspQryInvestorPosition msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryInvestorPosition msg");
 	}
 
 	std::shared_ptr<CThostFtdcInvestorPositionField> ptr1 = nullptr;
@@ -1705,7 +1662,7 @@ void traderctp::OnRspQryBrokerTradingParams(CThostFtdcBrokerTradingParamsField
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO, "ctp OnRspQryBrokerTradingParams msg");
+			.Log(LOG_INFO, "ctpsopt OnRspQryBrokerTradingParams msg");
 	}
 	else
 	{
@@ -1717,7 +1674,7 @@ void traderctp::OnRspQryBrokerTradingParams(CThostFtdcBrokerTradingParamsField
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspQryBrokerTradingParams msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryBrokerTradingParams msg");
 	}
 
 	std::shared_ptr<CThostFtdcBrokerTradingParamsField> ptr1 = nullptr;
@@ -1825,7 +1782,7 @@ void traderctp::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvest
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspQryTradingAccount msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryTradingAccount msg");
 	}
 	else
 	{
@@ -1837,7 +1794,7 @@ void traderctp::OnRspQryTradingAccount(CThostFtdcTradingAccountField* pRspInvest
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspQryTradingAccount msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryTradingAccount msg");
 	}
 
 	std::shared_ptr<CThostFtdcTradingAccountField> ptr1 = nullptr;
@@ -1896,7 +1853,7 @@ void traderctp::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspQryContractBank msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryContractBank msg");
 	}
 	else
 	{
@@ -1908,7 +1865,7 @@ void traderctp::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspQryContractBank msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryContractBank msg");
 	}
 
 	std::shared_ptr<CThostFtdcContractBankField> ptr1 = nullptr;
@@ -1982,7 +1939,7 @@ void traderctp::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccount
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspQryAccountregister msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryAccountregister msg");
 	}
 	else
 	{
@@ -1994,7 +1951,7 @@ void traderctp::OnRspQryAccountregister(CThostFtdcAccountregisterField *pAccount
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspQryAccountregister msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryAccountregister msg");
 	}
 
 	std::shared_ptr<CThostFtdcAccountregisterField> ptr1 = nullptr;
@@ -2063,7 +2020,7 @@ void traderctp::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferS
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRspQryTransferSerial msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryTransferSerial msg");
 	}
 	else
 	{
@@ -2075,7 +2032,7 @@ void traderctp::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferS
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 			.WithField("IsLast",bIsLast)
 			.WithField("RequestID",nRequestID)			
-			.Log(LOG_INFO,"ctp OnRspQryTransferSerial msg");
+			.Log(LOG_INFO,"ctpsopt OnRspQryTransferSerial msg");
 	}
 
 	std::shared_ptr<CThostFtdcTransferSerialField> ptr1 = nullptr;
@@ -2099,7 +2056,7 @@ void traderctp::OnRspQryTransferSerial(CThostFtdcTransferSerialField *pTransferS
 void traderctp::ProcessFromBankToFutureByFuture(
 	std::shared_ptr<CThostFtdcRspTransferField> pRspTransfer)
 {
-	if (!pRspTransfer)
+	if (nullptr==pRspTransfer)
 	{
 		return;
 	}
@@ -2170,7 +2127,7 @@ void traderctp::OnRtnFromBankToFutureByFuture(
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)				
 				.WithPack("ctp_pack",strMsg)
-				.Log(LOG_INFO,"ctp OnRtnFromBankToFutureByFuture msg");
+				.Log(LOG_INFO,"ctpsopt OnRtnFromBankToFutureByFuture msg");
 		}
 	}
 	else
@@ -2179,7 +2136,7 @@ void traderctp::OnRtnFromBankToFutureByFuture(
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)			
-			.Log(LOG_INFO,"ctp OnRtnFromBankToFutureByFuture msg");
+			.Log(LOG_INFO,"ctpsopt OnRtnFromBankToFutureByFuture msg");
 	}
 
 	if (nullptr == pRspTransfer)
@@ -2216,7 +2173,7 @@ void traderctp::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTr
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
 				.WithPack("ctp_pack",strMsg)
-				.Log(LOG_INFO,"ctp OnRtnFromFutureToBankByFuture msg");
+				.Log(LOG_INFO,"ctpsopt OnRtnFromFutureToBankByFuture msg");
 		}
 	}
 	else
@@ -2225,7 +2182,7 @@ void traderctp::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTr
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)			
-			.Log(LOG_INFO, "ctp OnRtnFromFutureToBankByFuture msg");
+			.Log(LOG_INFO, "ctpsopt OnRtnFromFutureToBankByFuture msg");
 	}
 
 	if (nullptr == pRspTransfer)
@@ -2288,7 +2245,7 @@ void traderctp::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTra
 				.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
 				.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")				
 				.WithPack("ctp_pack",strMsg)
-				.Log(LOG_INFO,"ctp OnErrRtnFutureToBankByFuture msg");
+				.Log(LOG_INFO,"ctpsopt OnErrRtnFutureToBankByFuture msg");
 		}
 	}
 	else
@@ -2299,7 +2256,7 @@ void traderctp::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTra
 			.WithField("user_name",_req_login.user_name)
 			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
-			.Log(LOG_INFO,"ctp OnErrRtnFutureToBankByFuture msg");
+			.Log(LOG_INFO,"ctpsopt OnErrRtnFutureToBankByFuture msg");
 	}
 
 	if (nullptr == pRspInfo)
@@ -2375,7 +2332,7 @@ void traderctp::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTra
 				.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
 				.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 				.WithPack("ctp_pack",strMsg)
-				.Log(LOG_INFO,"ctp OnErrRtnFutureToBankByFuture msg");			
+				.Log(LOG_INFO,"ctpsopt OnErrRtnFutureToBankByFuture msg");			
 		}
 	}
 	else
@@ -2386,7 +2343,7 @@ void traderctp::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTra
 			.WithField("user_name",_req_login.user_name)
 			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
 			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")			
-			.Log(LOG_INFO, "ctp OnErrRtnFutureToBankByFuture msg");
+			.Log(LOG_INFO, "ctpsopt OnErrRtnFutureToBankByFuture msg");
 	}
 
 	if (nullptr == pRspInfo)
@@ -2482,7 +2439,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 	order.order_id = local_key.order_id;
 	order.exchange_id = pOrder->ExchangeID;
 	order.instrument_id = pOrder->InstrumentID;
-	/*auto ins = GetInstrument(order.symbol());
+	auto ins = GetInstrument(order.symbol());
 	if (nullptr==ins)
 	{
 		Log().WithField("fun","ProcessRtnOrder")
@@ -2493,7 +2450,7 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 			.WithField("instrument_id", order.instrument_id)
 			.Log(LOG_ERROR,"ctp ProcessRtnOrder,instrument not exist");		
 		return;
-	}*/
+	}
 	switch (pOrder->Direction)
 	{
 	case THOST_FTDC_D_Buy:
@@ -2696,7 +2653,7 @@ void traderctp::OnRtnOrder(CThostFtdcOrderField* pOrder)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)				
 				.WithPack("ctp_pack",strMsg)
-				.Log(LOG_INFO, "ctp OnRtnOrder msg");		
+				.Log(LOG_INFO, "ctpsopt OnRtnOrder msg");		
 		}
 	}
 	else
@@ -2705,7 +2662,7 @@ void traderctp::OnRtnOrder(CThostFtdcOrderField* pOrder)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)			
-			.Log(LOG_INFO, "ctp OnRtnOrder msg");
+			.Log(LOG_INFO, "ctpsopt OnRtnOrder msg");
 	}
 
 	if (nullptr == pOrder)
@@ -2767,7 +2724,7 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 	trade.instrument_id = pTrade->InstrumentID;
 	trade.exchange_trade_id = pTrade->TradeID;
 	
-	/*auto ins = GetInstrument(trade.symbol());
+	auto ins = GetInstrument(trade.symbol());
 	if (nullptr==ins)
 	{
 		Log().WithField("fun","ProcessRtnTrade")
@@ -2776,9 +2733,9 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 			.WithField("user_name",_req_login.user_name)
 			.WithField("exchange_id",trade.exchange_id)
 			.WithField("instrument_id",trade.instrument_id)
-			.Log(LOG_ERROR,"ctp OnRtnTrade,instrument not exist");		
+			.Log(LOG_ERROR,"ctpsopt OnRtnTrade,instrument not exist");		
 		return;
-	}*/
+	}
 
 	switch (pTrade->Direction)
 	{
@@ -2813,45 +2770,9 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 	trade.volume = pTrade->Volume;
 	trade.price = pTrade->Price;
 	DateTime dt;
-	dt.time.microsecond = 0;
-
-	bool b_is_dce_or_czce = (exchangeId == "CZCE") || (exchangeId == "DCE");
+	dt.time.microsecond = 0;	
 	sscanf(pTrade->TradeTime, "%02d:%02d:%02d", &dt.time.hour, &dt.time.minute, &dt.time.second);
-	if (b_is_dce_or_czce)
-	{
-		int nTime = dt.time.hour * 100 + dt.time.minute;
-		//夜盘
-		if ((nTime > 2030) && (nTime < 2359))
-		{
-			boost::posix_time::ptime tm = boost::posix_time::second_clock::local_time();
-			int nLocalTime = tm.time_of_day().hours() * 100 + tm.time_of_day().minutes();
-			//现在还是夜盘时间
-			if ((nLocalTime > 2030) && (nLocalTime <= 2359))
-			{
-				dt.date.year = tm.date().year();
-				dt.date.month = tm.date().month();
-				dt.date.day = tm.date().day();
-			}
-			//现在已经是白盘时间了
-			else
-			{
-				dt.date.year = tm.date().year();
-				dt.date.month = tm.date().month();
-				dt.date.day = tm.date().day();
-				//跳到上一个工作日
-				MoveDateByWorkday(&dt.date, -1);	
-			}
-		}
-		//白盘
-		else
-		{
-			sscanf(pTrade->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
-		}		
-	}
-	else
-	{
-		sscanf(pTrade->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
-	}	
+	sscanf(pTrade->TradeDate, "%04d%02d%02d", &dt.date.year, &dt.date.month, &dt.date.day);
 	trade.trade_date_time = DateTimeToEpochNano(&dt);
 	trade.commission = 0.0;
 	trade.changed = true;
@@ -2886,7 +2807,7 @@ void traderctp::OnRtnTrade(CThostFtdcTradeField* pTrade)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)
 				.WithPack("ctp_pack", strMsg)
-				.Log(LOG_INFO, "ctp OnRtnTrade msg");
+				.Log(LOG_INFO, "ctpsopt OnRtnTrade msg");
 		}
 	}
 	else
@@ -2895,7 +2816,7 @@ void traderctp::OnRtnTrade(CThostFtdcTradeField* pTrade)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)			
-			.Log(LOG_INFO,"ctp OnRtnTrade msg");
+			.Log(LOG_INFO,"ctpsopt OnRtnTrade msg");
 	}
 
 	if (nullptr == pTrade)
@@ -3007,7 +2928,7 @@ void traderctp::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNot
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRtnTradingNotice msg");		
+			.Log(LOG_INFO,"ctpsopt OnRtnTradingNotice msg");		
 	}
 	else
 	{
@@ -3015,7 +2936,7 @@ void traderctp::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNot
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)			
-			.Log(LOG_INFO,"ctp OnRtnTradingNotice msg");
+			.Log(LOG_INFO,"ctpsopt OnRtnTradingNotice msg");
 	}
 
 	if (nullptr == pTradingNoticeInfo)
@@ -3039,7 +2960,7 @@ void traderctp::OnRspError(CThostFtdcRspInfoField* pRspInfo
 		.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
 		.WithField("IsLast",bIsLast)
 		.WithField("RequestID", nRequestID)
-		.Log(LOG_INFO,"ctp OnRspError msg");	
+		.Log(LOG_INFO,"ctpsopt OnRspError msg");	
 }
 
 void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrumentStatus)
@@ -3056,7 +2977,7 @@ void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrume
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
 			.WithPack("ctp_pack",strMsg)
-			.Log(LOG_INFO,"ctp OnRtnInstrumentStatus msg");
+			.Log(LOG_INFO,"ctpsopt OnRtnInstrumentStatus msg");
 	}
 	else
 	{
@@ -3064,7 +2985,7 @@ void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrume
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)			
-			.Log(LOG_INFO,"ctp OnRtnInstrumentStatus msg");
+			.Log(LOG_INFO,"ctpsopt OnRtnInstrumentStatus msg");
 	}
 
 	if (nullptr == pInstrumentStatus)
@@ -3107,7 +3028,7 @@ int traderctp::ReqUserLogin()
 			.WithField("product_info",_req_login.broker.product_info)
 			.WithField("client_ip", _req_login.client_ip)			
 			.WithField("ret",ret)
-			.Log(LOG_WARNING,"ctp ReqUserLogin fail");	
+			.Log(LOG_WARNING,"ctpsopt ReqUserLogin fail");	
 	}	
 	return ret;
 }
@@ -3130,14 +3051,13 @@ void traderctp::SendLoginRequest()
 		.WithField("user_name", _req_login.user_name)
 		.WithField("client_app_id",_req_login.client_app_id)
 		.WithField("client_system_info_length",(int)_req_login.client_system_info.length())	
-		.Log(LOG_INFO,"ctp SendLoginRequest");
+		.Log(LOG_INFO,"ctpsopt SendLoginRequest");
 	
 	long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	m_req_login_dt.store(now);
 	//提交终端信息
 	if (
-		(!_req_login.client_system_info.empty())
-		&& (_req_login.bid.find("simnow",0) == std::string::npos)
+		(!_req_login.client_system_info.empty())		
 		&&(_req_login.bid.find("nhqhsopt", 0) == std::string::npos)
 		)
 	{
@@ -3180,7 +3100,7 @@ void traderctp::ReinitCtp()
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)		
-		.Log(LOG_INFO,"ctp ReinitCtp start");	
+		.Log(LOG_INFO,"ctpsopt ReinitCtp start");	
 	if (nullptr != m_pTdApi)
 	{
 		StopTdApi();
@@ -3200,7 +3120,7 @@ void traderctp::ReinitCtp()
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
-		.Log(LOG_INFO,"ctp ReinitCtp end");	
+		.Log(LOG_INFO,"ctpsopt ReinitCtp end");	
 }
 
 void traderctp::ReqConfirmSettlement()
@@ -3215,7 +3135,7 @@ void traderctp::ReqConfirmSettlement()
 		.WithField("bid", _req_login.bid)
 		.WithField("user_name", _req_login.user_name)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqConfirmSettlement");	
+		.Log(LOG_INFO,"ctpsopt ReqConfirmSettlement");	
 }
 
 void traderctp::ReqQrySettlementInfoConfirm()
@@ -3232,7 +3152,7 @@ void traderctp::ReqQrySettlementInfoConfirm()
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqQrySettlementInfoConfirm");
+		.Log(LOG_INFO,"ctpsopt ReqQrySettlementInfoConfirm");
 }
 
 int traderctp::ReqQryBrokerTradingParams()
@@ -3248,7 +3168,7 @@ int traderctp::ReqQryBrokerTradingParams()
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqQryBrokerTradingParams");
+		.Log(LOG_INFO,"ctpsopt ReqQryBrokerTradingParams");
 	return r;
 }
 
@@ -3265,7 +3185,7 @@ int traderctp::ReqQryAccount(int reqid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("RequestID",reqid)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqQryTradingAccount");
+		.Log(LOG_INFO,"ctpsopt ReqQryTradingAccount");
 	return r;
 }
 
@@ -3281,7 +3201,7 @@ int traderctp::ReqQryPosition(int reqid)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqQryInvestorPosition");
+		.Log(LOG_INFO,"ctpsopt ReqQryInvestorPosition");
 	return r;
 }
 
@@ -3297,7 +3217,7 @@ void traderctp::ReqQryTransferSerial()
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqQryTransferSerial");
+		.Log(LOG_INFO,"ctpsopt ReqQryTransferSerial");
 }
 
 void traderctp::ReqQryBank()
@@ -3312,7 +3232,7 @@ void traderctp::ReqQryBank()
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqQryContractBank");
+		.Log(LOG_INFO,"ctpsopt ReqQryContractBank");
 }
 
 void traderctp::ReqQryAccountRegister()
@@ -3327,7 +3247,7 @@ void traderctp::ReqQryAccountRegister()
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqQryAccountregister");
+		.Log(LOG_INFO,"ctpsopt ReqQryAccountregister");
 }
 
 void traderctp::ReqQrySettlementInfo()
@@ -3343,7 +3263,7 @@ void traderctp::ReqQrySettlementInfo()
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqQrySettlementInfo");
+		.Log(LOG_INFO,"ctpsopt ReqQrySettlementInfo");
 }
 
 void traderctp::ReqQryHistorySettlementInfo()
@@ -3372,7 +3292,7 @@ void traderctp::ReqQryHistorySettlementInfo()
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
-		.Log(LOG_INFO,"ctp ReqQryHistorySettlementInfo");
+		.Log(LOG_INFO,"ctpsopt ReqQryHistorySettlementInfo");
 	if (r == 0)
 	{
 		m_his_settlement_info = "";
@@ -3615,8 +3535,8 @@ void traderctp::SendUserData()
 		{
 			//重算所有持仓项的持仓盈亏和浮动盈亏
 			double total_position_profit = 0;
-			double total_float_profit = 0;
-			/*			
+			double total_float_profit = 0;		
+			double total_option_value = 0;
 			for (auto it = m_data.m_positions.begin();
 				it != m_data.m_positions.end(); ++it)
 			{
@@ -3634,7 +3554,7 @@ void traderctp::SendUserData()
 						.WithField("user_name",_req_login.user_name)
 						.WithField("exchange_id",ps.exchange_id)
 						.WithField("instrument_id",ps.instrument_id)
-						.Log(LOG_INFO, "ctp miss symbol when processing position");					
+						.Log(LOG_INFO, "ctpsopt miss symbol when processing position");					
 					continue;
 				}
 				ps.volume_long = ps.volume_long_his + ps.volume_long_today;
@@ -3671,6 +3591,12 @@ void traderctp::SendUserData()
 						{
 							ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 							ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+							}
 						}
 						else
 						{
@@ -3682,6 +3608,12 @@ void traderctp::SendUserData()
 						{
 							ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 							ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+							}
 						}
 						else
 						{
@@ -3707,9 +3639,19 @@ void traderctp::SendUserData()
 					{
 						ps.last_price = last_price;
 
-						ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-						ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-						ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							ps.position_profit_long = 0;
+							ps.position_profit_short = 0;
+							ps.position_profit = 0;
+						}
+						else
+						{
+							ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+							ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+							ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+						}						
 
 						ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 						ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
@@ -3719,6 +3661,11 @@ void traderctp::SendUserData()
 						{
 							ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 							ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+							}
 						}
 						else
 						{
@@ -3730,6 +3677,11 @@ void traderctp::SendUserData()
 						{
 							ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 							ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+							}
 						}
 						else
 						{
@@ -3772,6 +3724,11 @@ void traderctp::SendUserData()
 							{
 								ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 								ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+								//如果是期权
+								if (ps.ins->product_class == kProductClassOptions)
+								{
+									total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+								}
 							}
 							else
 							{
@@ -3783,6 +3740,11 @@ void traderctp::SendUserData()
 							{
 								ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 								ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+								//如果是期权
+								if (ps.ins->product_class == kProductClassOptions)
+								{
+									total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+								}
 							}
 							else
 							{
@@ -3807,10 +3769,20 @@ void traderctp::SendUserData()
 						{
 							ps.last_price = last_price;
 
-							ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-							ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-							ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								ps.position_profit_long = 0;
+								ps.position_profit_short = 0;
+								ps.position_profit = 0;
+							}
+							else
+							{
+								ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+								ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+								ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+							}
+							
 							ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 							ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 							ps.float_profit = ps.float_profit_long + ps.float_profit_short;
@@ -3819,6 +3791,11 @@ void traderctp::SendUserData()
 							{
 								ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 								ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+								//如果是期权
+								if (ps.ins->product_class == kProductClassOptions)
+								{
+									total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+								}
 							}
 							else
 							{
@@ -3830,6 +3807,11 @@ void traderctp::SendUserData()
 							{
 								ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 								ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+								//如果是期权
+								if (ps.ins->product_class == kProductClassOptions)
+								{
+									total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+								}
 							}
 							else
 							{
@@ -3843,13 +3825,12 @@ void traderctp::SendUserData()
 					}							
 				}
 							
-				if (IsValid(ps.position_profit))
+				if (IsValid(ps.position_profit) && (ps.ins->product_class != kProductClassOptions))
 					total_position_profit += ps.position_profit;
 
-				if (IsValid(ps.float_profit))
+				if (IsValid(ps.float_profit) && (ps.ins->product_class != kProductClassOptions))
 					total_float_profit += ps.float_profit;
-			}
-			*/
+			}			
 			//重算资金账户
 			if (m_something_changed)
 			{
@@ -3898,10 +3879,15 @@ void traderctp::SendUserData()
 					acc.float_profit = total_float_profit;
 					acc.available += av_diff;
 					acc.balance += dv;
+					acc.value_balance = acc.balance + total_option_value;
 					if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
+					{
 						acc.risk_ratio = acc.margin / acc.balance;
+					}						
 					else
+					{
 						acc.risk_ratio = NAN;
+					}						
 					acc.changed = true;
 				}				
 			}
@@ -3955,7 +3941,7 @@ void traderctp::SendUserDataImd(int connectId)
 	//重算所有持仓项的持仓盈亏和浮动盈亏
 	double total_position_profit = 0;
 	double total_float_profit = 0;
-	/*
+	double total_option_value = 0;
 	for (auto it = m_data.m_positions.begin();
 		it != m_data.m_positions.end(); ++it)
 	{
@@ -3973,7 +3959,7 @@ void traderctp::SendUserDataImd(int connectId)
 				.WithField("user_name",_req_login.user_name)
 				.WithField("exchange_id",ps.exchange_id)
 				.WithField("instrument_id",ps.instrument_id)
-				.Log(LOG_INFO,"ctp miss symbol when processing position");			
+				.Log(LOG_INFO,"ctpsopt miss symbol when processing position");			
 			continue;
 		}
 		ps.volume_long = ps.volume_long_his + ps.volume_long_today;
@@ -4010,6 +3996,11 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 					ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+					}
 				}
 				else
 				{
@@ -4021,6 +4012,11 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 					ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+					}
 				}
 				else
 				{
@@ -4046,10 +4042,20 @@ void traderctp::SendUserDataImd(int connectId)
 			{
 				ps.last_price = last_price;
 
-				ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-				ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-				ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-
+				//如果是期权
+				if (ps.ins->product_class == kProductClassOptions)
+				{
+					ps.position_profit_long = 0;
+					ps.position_profit_short = 0;
+					ps.position_profit = 0;
+				}
+				else
+				{
+					ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+					ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+					ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+				}
+				
 				ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 				ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 				ps.float_profit = ps.float_profit_long + ps.float_profit_short;
@@ -4058,6 +4064,11 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 					ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+					}
 				}
 				else
 				{
@@ -4069,6 +4080,12 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 					ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+					}
 				}
 				else
 				{
@@ -4111,6 +4128,11 @@ void traderctp::SendUserDataImd(int connectId)
 					{
 						ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 						ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+						}
 					}
 					else
 					{
@@ -4122,6 +4144,11 @@ void traderctp::SendUserDataImd(int connectId)
 					{
 						ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 						ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+						}
 					}
 					else
 					{
@@ -4146,10 +4173,20 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.last_price = last_price;
 
-					ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-					ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-					ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						ps.position_profit_long = 0;
+						ps.position_profit_short = 0;
+						ps.position_profit = 0;
+					}
+					else
+					{
+						ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+						ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+						ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+					}
+					
 					ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 					ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 					ps.float_profit = ps.float_profit_long + ps.float_profit_short;
@@ -4158,6 +4195,11 @@ void traderctp::SendUserDataImd(int connectId)
 					{
 						ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 						ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+						}
 					}
 					else
 					{
@@ -4169,6 +4211,11 @@ void traderctp::SendUserDataImd(int connectId)
 					{
 						ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 						ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+						}
 					}
 					else
 					{
@@ -4182,12 +4229,12 @@ void traderctp::SendUserDataImd(int connectId)
 			}
 		}
 
-		if (IsValid(ps.position_profit))
+		if (IsValid(ps.position_profit) && (ps.ins->product_class != kProductClassOptions))
 			total_position_profit += ps.position_profit;
 
-		if (IsValid(ps.float_profit))
+		if (IsValid(ps.float_profit) && (ps.ins->product_class != kProductClassOptions))
 			total_float_profit += ps.float_profit;
-	}*/
+	}
 	//重算资金账户
 	if (m_something_changed)
 	{
@@ -4238,6 +4285,7 @@ void traderctp::SendUserDataImd(int connectId)
 			acc.float_profit = total_float_profit;
 			acc.available += av_diff;
 			acc.balance += dv;
+			acc.value_balance = acc.balance + total_option_value;
 			if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
 				acc.risk_ratio = acc.margin / acc.balance;
 			else
@@ -4319,7 +4367,6 @@ void traderctp::Start()
 
 	try
 	{
-
 		m_run_receive_msg.store(true);
 		_thread_ptr = boost::make_shared<boost::thread>(
 			boost::bind(&traderctp::ReceiveMsg,this,_key));
@@ -4331,7 +4378,7 @@ void traderctp::Start()
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
 			.WithField("errmsg",ex.what())
-			.Log(LOG_ERROR,"trade ctp start ReceiveMsg thread fail");		
+			.Log(LOG_ERROR,"trade ctpsopt start ReceiveMsg thread fail");		
 	}
 }
 
@@ -4372,7 +4419,7 @@ void traderctp::ReceiveMsg(const std::string& key)
 				Log().WithField("fun","ReceiveMsg")
 					.WithField("key",strKey)
 					.WithField("msgcontent",line)
-					.Log(LOG_ERROR,"traderctp ReceiveMsg is invalid!");				
+					.Log(LOG_ERROR,"trader ctpsopt ReceiveMsg is invalid!");				
 				continue;
 			}
 			else
@@ -4410,7 +4457,7 @@ void traderctp::ReceiveMsg(const std::string& key)
 			Log().WithField("fun","ReceiveMsg")
 				.WithField("key",strKey)
 				.WithField("errmsg",ex.what())
-				.Log(LOG_ERROR,"traderctp ReceiveMsg exception!");		
+				.Log(LOG_ERROR,"trader ctpsopt ReceiveMsg exception!");		
 			break;
 		}
 	}
@@ -4448,7 +4495,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			.WithField("user_name", _req_login.user_name)
 			.WithField("msgcontent", msg)
 			.WithField("connId", connId)
-			.Log(LOG_WARNING, "traderctp parse json fail");
+			.Log(LOG_WARNING, "trader ctpsopt parse json fail");
 		NotifyContinueProcessMsg(false);
 		return;
 	}
@@ -4470,7 +4517,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
 				.WithField("connId", connId)
-				.Log(LOG_ERROR, "trade ctp receive change_password msg before receive login msg");
+				.Log(LOG_ERROR, "trade ctpsopt receive change_password msg before receive login msg");
 
 			NotifyContinueProcessMsg(false);
 			return;
@@ -4483,7 +4530,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
 				.WithField("connId", connId)
-				.Log(LOG_ERROR, "trade ctp receive change_password msg from a diffrent connection before login suceess");
+				.Log(LOG_ERROR, "trade ctpsopt receive change_password msg from a diffrent connection before login suceess");
 
 			NotifyContinueProcessMsg(false);
 			return;
@@ -4526,7 +4573,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
 				.WithField("connId", connId)
-				.Log(LOG_ERROR, "trade ctp receive other msg before login");
+				.Log(LOG_ERROR, "trade ctpsopt receive other msg before login");
 
 			NotifyContinueProcessMsg(false);
 			return;
@@ -4540,7 +4587,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
 				.WithField("connId", connId)
-				.Log(LOG_WARNING, "trade ctp receive other msg which from not login connecion");
+				.Log(LOG_WARNING, "trade ctpsopt receive other msg which from not login connecion");
 
 			NotifyContinueProcessMsg(false);
 			return;
@@ -4698,7 +4745,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
 				.WithField("connId", connId)
-				.Log(LOG_INFO, "trade ctp receive qry_account_info msg");
+				.Log(LOG_INFO, "trade ctpsopt receive qry_account_info msg");
 
 			if (nullptr == m_pTdApi)
 			{
@@ -4717,7 +4764,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
 				.WithField("connId", connId)
-				.Log(LOG_INFO, "trade ctp receive qry_account_register msg");
+				.Log(LOG_INFO, "trade ctpsopt receive qry_account_register msg");
 
 			if (nullptr == m_pTdApi)
 			{
@@ -4740,7 +4787,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
 				.WithField("connId", connId)
-				.Log(LOG_INFO, "trade ctp receive req_start_ctp msg");
+				.Log(LOG_INFO, "trade ctpsopt receive req_start_ctp msg");
 			if (connId != 0)
 			{
 				NotifyContinueProcessMsg(false);
@@ -4757,7 +4804,7 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 				.WithField("bid", _req_login.bid)
 				.WithField("user_name", _req_login.user_name)
 				.WithField("connId", connId)
-				.Log(LOG_INFO, "trade ctp receive req_stop_ctp msg");
+				.Log(LOG_INFO, "trade ctpsopt receive req_stop_ctp msg");
 			if (connId != 0)
 			{
 				NotifyContinueProcessMsg(false);
@@ -4912,7 +4959,7 @@ void traderctp::OnReqStartCTP(const std::string& msg)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)		
-		.Log(LOG_INFO,"req start ctp");	
+		.Log(LOG_INFO,"req start ctpsopt");	
 
 	SerializerConditionOrderData nss;
 	if (!nss.FromString(msg.c_str()))
@@ -4921,7 +4968,7 @@ void traderctp::OnReqStartCTP(const std::string& msg)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.Log(LOG_WARNING,"traderctp parse json fail");		
+			.Log(LOG_WARNING,"trader ctpsopt parse json fail");		
 		return;
 	}
 	
@@ -4939,7 +4986,7 @@ void traderctp::OnReqStartCTP(const std::string& msg)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.Log(LOG_INFO,"has login success instance req start ctp");
+			.Log(LOG_INFO,"has login success instance req start ctpsopt");
 
 		ClearOldData();
 		
@@ -4957,7 +5004,7 @@ void traderctp::OnReqStartCTP(const std::string& msg)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.Log(LOG_INFO,"not login instance req start ctp");
+			.Log(LOG_INFO,"not login instance req start ctpsopt");
 				
 		ReqLogin reqLogin;
 		reqLogin.aid = "req_login";
@@ -4975,7 +5022,7 @@ void traderctp::OnReqStopCTP(const std::string& msg)
 		.WithField("key",_key)
 		.WithField("bid",_req_login.bid)
 		.WithField("user_name",_req_login.user_name)
-		.Log(LOG_INFO,"req stop ctp");
+		.Log(LOG_INFO,"req stop ctpsopt");
 	
 	SerializerConditionOrderData nss;
 	if (!nss.FromString(msg.c_str()))
@@ -4985,7 +5032,7 @@ void traderctp::OnReqStopCTP(const std::string& msg)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
 			.WithField("msgcontent",msg)
-			.Log(LOG_WARNING,"traderctp parse json fail");		
+			.Log(LOG_WARNING,"trader ctpsopt parse json fail");		
 		return;
 	}
 
@@ -5003,7 +5050,7 @@ void traderctp::OnReqStopCTP(const std::string& msg)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.Log(LOG_INFO,"has login success instance req stop ctp");		
+			.Log(LOG_INFO,"has login success instance req stop ctpsopt");		
 
 		if (m_need_save_file.load())
 		{
@@ -5018,7 +5065,7 @@ void traderctp::OnReqStopCTP(const std::string& msg)
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.Log(LOG_INFO,"not login instance req stop ctp");
+			.Log(LOG_INFO,"not login instance req stop ctpsopt");
 
 		StopTdApi();
 	}
@@ -5043,7 +5090,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 		.WithField("front",req.front)
 		.WithField("broker_id",req.broker_id)
 		.WithField("connId",connId)
-		.Log(LOG_INFO,"traderctp ProcessReqLogIn");	
+		.Log(LOG_INFO,"trader ctpsopt ProcessReqLogIn");	
 
 	//如果CTP已经登录成功
 	if (m_b_login.load())
@@ -5125,7 +5172,7 @@ void traderctp::ProcessReqLogIn(int connId, ReqLogin& req)
 				.WithField("user_name",_req_login.user_name)				
 				.WithField("front",req.front)
 				.WithField("broker_id",req.broker_id)				
-				.Log(LOG_INFO,"ctp login from custom front and broker_id");			
+				.Log(LOG_INFO,"ctpsopt login from custom front and broker_id");			
 
 			_req_login.broker.ctp_broker_id = _req_login.broker_id;
 			_req_login.broker.trading_fronts.clear();
@@ -5228,7 +5275,7 @@ ECTPLoginStatus traderctp::WaitLogIn()
 				.WithField("key",_key)
 				.WithField("bid",_req_login.bid)
 				.WithField("user_name",_req_login.user_name)				
-				.Log(LOG_WARNING,"CTP login timeout,trading fronts is closed or trading fronts config is error");			
+				.Log(LOG_WARNING,"ctpsopt login timeout,trading fronts is closed or trading fronts config is error");			
 		}
 	}
 	return _logIn_status;
@@ -5286,7 +5333,7 @@ void traderctp::StopTdApi()
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
 			.WithField("user_name",_req_login.user_name)
-			.Log(LOG_INFO,"ctp OnFinish");
+			.Log(LOG_INFO,"ctpsopt OnFinish");
 
 		m_pTdApi->RegisterSpi(NULL);
 		m_pTdApi->Release();
@@ -5776,7 +5823,7 @@ int traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 			.WithField("OrderRef", rkey.order_ref)
 			.WithField("ret", r)
 			.WithField("order_count", order_count)
-			.Log(LOG_WARNING,"send order to ctp fail,because of sending too fast,will try it again later");
+			.Log(LOG_WARNING,"send order to ctpsopt fail,because of sending too fast,will try it again later");
 	}
 
 	return r;
@@ -5825,7 +5872,7 @@ int traderctp::RegSystemInfo()
 		.WithField("client_app_id", _req_login.client_app_id)
 		.WithField("client_system_info_length", (int)client_system_info.length())
 		.WithField("ret", ret)
-		.Log(LOG_INFO, "ctp RegisterUserSystemInfo");
+		.Log(LOG_INFO, "ctpsopt RegisterUserSystemInfo");
 	return ret;
 }
 
@@ -5869,7 +5916,7 @@ int traderctp::ReqAuthenticate()
 		.WithField("app_id", _req_login.broker.product_info)
 		.WithField("auth_code", _req_login.broker.auth_code)
 		.WithField("ret", ret)
-		.Log(LOG_INFO, "ctp ReqAuthenticate");
+		.Log(LOG_INFO, "ctpsopt ReqAuthenticate");
 	return ret;
 }
 

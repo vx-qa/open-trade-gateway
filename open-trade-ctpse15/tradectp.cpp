@@ -750,6 +750,28 @@ void traderctp::ProcessUserPasswordUpdateField(std::shared_ptr<CThostFtdcUserPas
 	}
 }
 
+void traderctp::ProcessTradingAccountPasswordUpdate(std::shared_ptr<CThostFtdcTradingAccountPasswordUpdateField>
+	pTradingAccountPasswordUpdate, std::shared_ptr<CThostFtdcRspInfoField> pRspInfo)
+{
+	if (nullptr == pRspInfo)
+	{
+		return;
+	}
+
+	if (pRspInfo->ErrorID == 0)
+	{		
+		OutputNotifySycn(m_loging_connectId
+			,363
+			,u8"修改资金密码成功");		
+	}
+	else
+	{
+		OutputNotifySycn(m_loging_connectId, pRspInfo->ErrorID
+			, u8"修改资金密码失败," + GBKToUTF8(pRspInfo->ErrorMsg)
+			, "WARNING");
+	}
+}
+
 void traderctp::OnRspUserPasswordUpdate(
 	CThostFtdcUserPasswordUpdateField *pUserPasswordUpdate
 	, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
@@ -2635,7 +2657,78 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		if (it != m_insert_order_set.end())
 		{
 			m_insert_order_set.erase(it);
-			OutputNotifyAllSycn(328,u8"下单成功");
+			
+			std::stringstream ss_1;		
+			
+			std::string strInstrumentId = u8"合约代码:";
+			strInstrumentId += pOrder->ExchangeID;
+			strInstrumentId += ".";
+			strInstrumentId += pOrder->InstrumentID;
+			ss_1 <<  strInstrumentId;
+
+			std::string strDirection = (pOrder->Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+			ss_1 << u8"，" << strDirection;
+
+			std::string strOffsetFlag = "";
+			if (THOST_FTDC_OF_Open == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:开仓";
+			}
+			else if (THOST_FTDC_OF_Close == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平仓";
+			}
+			else if (THOST_FTDC_OF_ForceClose == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:强平";
+			}
+			else if (THOST_FTDC_OF_CloseToday == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平今";
+			}
+			else if (THOST_FTDC_OF_CloseYesterday == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平昨";
+			}
+			else if (THOST_FTDC_OF_ForceOff == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:强减";
+			}
+			else if (THOST_FTDC_OF_LocalForceClose == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:本地强平";
+			}
+			else
+			{
+				strOffsetFlag = u8"开平标志:未知";
+			}
+			ss_1 << u8"，" << strOffsetFlag;
+
+			if (pOrder->OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:市价";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_BestPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:最优价";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:五档最优";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:" << pOrder->LimitPrice;
+			}
+			else
+			{
+				ss_1 << u8"，" << u8"委托价格:未知";
+			}
+			ss_1 << u8"，" << u8"委托手数:" << pOrder->VolumeTotalOriginal;
+
+			std::string strNotify = u8"下单成功，";
+			strNotify += ss_1.str();
+			OutputNotifyAllSycn(328,strNotify.c_str());
 		}
 
 		//更新Order Key				
@@ -2656,7 +2749,78 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 		if (it != m_cancel_order_set.end())
 		{
 			m_cancel_order_set.erase(it);
-			OutputNotifyAllSycn(329,u8"撤单成功");
+			std::stringstream ss_1;
+
+			std::string strInstrumentId = u8"合约代码:";
+			strInstrumentId += pOrder->ExchangeID;
+			strInstrumentId += ".";
+			strInstrumentId += pOrder->InstrumentID;
+			ss_1 <<  strInstrumentId;
+
+			std::string strDirection = (pOrder->Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+			ss_1 << u8"，" << strDirection;
+
+			std::string strOffsetFlag = "";
+			if (THOST_FTDC_OF_Open == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:开仓";
+			}
+			else if (THOST_FTDC_OF_Close == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平仓";
+			}
+			else if (THOST_FTDC_OF_ForceClose == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:强平";
+			}
+			else if (THOST_FTDC_OF_CloseToday == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平今";
+			}
+			else if (THOST_FTDC_OF_CloseYesterday == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:平昨";
+			}
+			else if (THOST_FTDC_OF_ForceOff == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:强减";
+			}
+			else if (THOST_FTDC_OF_LocalForceClose == pOrder->CombOffsetFlag[0])
+			{
+				strOffsetFlag = u8"开平标志:本地强平";
+			}
+			else
+			{
+				strOffsetFlag = u8"开平标志:未知";
+			}
+			ss_1 << u8"，" << strOffsetFlag;
+
+			if (pOrder->OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:市价";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_BestPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:最优价";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:五档最优";
+			}
+			else if (pOrder->OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+			{
+				ss_1 << u8"，" << u8"委托价格:" << pOrder->LimitPrice;
+			}
+			else
+			{
+				ss_1 << u8"，" << u8"委托价格:未知";
+			}
+			ss_1 << u8"，" << u8"委托手数:" << pOrder->VolumeTotalOriginal;
+
+			std::string strNotify = u8"撤单成功，";
+			strNotify += ss_1.str();
+			OutputNotifyAllSycn(329,strNotify.c_str());
+
 			CheckConditionOrderCancelOrderTask(order.order_id);
 			//删除Order
 			auto itOrder = m_input_order_key_map.find(strKey);
@@ -2671,7 +2835,79 @@ void traderctp::ProcessRtnOrder(std::shared_ptr<CThostFtdcOrderField> pOrder)
 			if (it2 != m_insert_order_set.end())
 			{
 				m_insert_order_set.erase(it2);
-				OutputNotifyAllSycn(330,u8"下单失败," + order.last_msg,"WARNING");
+
+				std::stringstream ss_1;	
+
+				std::string strInstrumentId = u8"合约代码:";
+				strInstrumentId += pOrder->ExchangeID;
+				strInstrumentId += ".";
+				strInstrumentId += pOrder->InstrumentID;
+				ss_1 <<  strInstrumentId;
+
+				std::string strDirection = (pOrder->Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+				ss_1 << u8"，" << strDirection;
+
+				std::string strOffsetFlag = "";
+				if (THOST_FTDC_OF_Open == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:开仓";
+				}
+				else if (THOST_FTDC_OF_Close == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:平仓";
+				}
+				else if (THOST_FTDC_OF_ForceClose == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:强平";
+				}
+				else if (THOST_FTDC_OF_CloseToday == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:平今";
+				}
+				else if (THOST_FTDC_OF_CloseYesterday == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:平昨";
+				}
+				else if (THOST_FTDC_OF_ForceOff == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:强减";
+				}
+				else if (THOST_FTDC_OF_LocalForceClose == pOrder->CombOffsetFlag[0])
+				{
+					strOffsetFlag = u8"开平标志:本地强平";
+				}
+				else
+				{
+					strOffsetFlag = u8"开平标志:未知";
+				}
+				ss_1 << u8"，" << strOffsetFlag;
+
+				if (pOrder->OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+				{
+					ss_1 << u8"，" << u8"委托价格:市价";
+				}
+				else if (pOrder->OrderPriceType == THOST_FTDC_OPT_BestPrice)
+				{
+					ss_1 << u8"，" << u8"委托价格:最优价";
+				}
+				else if (pOrder->OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+				{
+					ss_1 << u8"，" << u8"委托价格:五档最优";
+				}
+				else if (pOrder->OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+				{
+					ss_1 << u8"，" << u8"委托价格:" << pOrder->LimitPrice;
+				}
+				else
+				{
+					ss_1 << u8"，" << u8"委托价格:未知";
+				}
+				ss_1 << u8"，" << u8"委托手数:" << pOrder->VolumeTotalOriginal;
+
+				std::string strNotify = u8"下单失败,"+ order.last_msg;
+				strNotify+="，";
+				strNotify += ss_1.str();
+				OutputNotifyAllSycn(330,strNotify.c_str(),"WARNING");
 			}
 
 			//删除Order
@@ -2742,13 +2978,55 @@ void traderctp::ProcessRtnTrade(std::shared_ptr<CThostFtdcTradeField> pTrade)
 		if ((serverOrderInfo.ExchangeId == exchangeId)
 			&& (serverOrderInfo.OrderSysID == orderSysId))
 		{
-			serverOrderInfo.VolumeLeft -= pTrade->Volume;
+			std::stringstream ss;		
 
-			std::stringstream ss;
-			ss << u8"成交通知,合约:" << serverOrderInfo.ExchangeId
-				<< u8"." << serverOrderInfo.InstrumentId << u8",手数:" << pTrade->Volume ;
+			ss << u8"成交通知";
+			std::string strInstrumentId = u8"合约代码:"+serverOrderInfo.ExchangeId+"."+ serverOrderInfo.InstrumentId;
+			ss << "," << strInstrumentId;
+
+			std::string strDirection = (pTrade->Direction== THOST_FTDC_D_Buy)? u8"下单方向:买": u8"下单方向:卖";
+			ss << "," << strDirection;
+
+			std::string strOffsetFlag = "";
+			if (THOST_FTDC_OF_Open ==pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:开仓";
+			}
+			else if (THOST_FTDC_OF_Close == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:平仓";
+			}
+			else if (THOST_FTDC_OF_ForceClose == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:强平";
+			}
+			else if (THOST_FTDC_OF_CloseToday == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:平今";
+			}
+			else if (THOST_FTDC_OF_CloseYesterday == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:平昨";
+			}
+			else if (THOST_FTDC_OF_ForceOff == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:强减";
+			}
+			else if (THOST_FTDC_OF_LocalForceClose == pTrade->OffsetFlag)
+			{
+				strOffsetFlag = u8"开平标志:本地强平";
+			}
+			else
+			{
+				strOffsetFlag = u8"开平标志:未知";
+			}			
+			ss << "," << strOffsetFlag;
+
+			ss << "," << u8"成交价格:" << pTrade->Price<<","<< u8"成交手数:"<< pTrade->Volume;
+		
 			OutputNotifyAllSycn(331, ss.str().c_str());
 
+			serverOrderInfo.VolumeLeft -= pTrade->Volume;
 			if (serverOrderInfo.VolumeLeft <= 0)
 			{
 				m_input_order_key_map.erase(it);
@@ -3092,6 +3370,57 @@ void traderctp::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrume
 	_ios.post(boost::bind(&traderctp::ProcessRtnInstrumentStatus,this,ptr1));
 }
 
+void traderctp::OnRspTradingAccountPasswordUpdate(CThostFtdcTradingAccountPasswordUpdateField
+	*pTradingAccountPasswordUpdate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+	if (nullptr != pTradingAccountPasswordUpdate)
+	{
+		SerializerLogCtp nss;
+		nss.FromVar(*pTradingAccountPasswordUpdate);
+		std::string strMsg = "";
+		nss.ToString(&strMsg);
+		Log().WithField("fun","OnRspTradingAccountPasswordUpdate")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("IsLast",bIsLast)
+			.WithField("RequestID",nRequestID)
+			.WithPack("ctp_pack",strMsg)
+			.Log(LOG_INFO,"ctp OnRspTradingAccountPasswordUpdate msg");
+	}
+	else
+	{
+		Log().WithField("fun","OnRspTradingAccountPasswordUpdate")
+			.WithField("key",_key)
+			.WithField("bid",_req_login.bid)
+			.WithField("user_name",_req_login.user_name)
+			.WithField("errid",pRspInfo ? pRspInfo->ErrorID : -999)
+			.WithField("errmsg",pRspInfo ? GBKToUTF8(pRspInfo->ErrorMsg).c_str() : "")
+			.WithField("IsLast",bIsLast)
+			.WithField("RequestID",nRequestID)
+			.Log(LOG_INFO, "ctp OnRspTradingAccountPasswordUpdate msg");
+	}
+
+	std::shared_ptr<CThostFtdcTradingAccountPasswordUpdateField> ptr1 = nullptr;
+	if (nullptr != pTradingAccountPasswordUpdate)
+	{
+		ptr1 = std::make_shared<CThostFtdcTradingAccountPasswordUpdateField>(
+			CThostFtdcTradingAccountPasswordUpdateField(*pTradingAccountPasswordUpdate));
+	}
+	
+	std::shared_ptr<CThostFtdcRspInfoField> ptr2 = nullptr;
+	if (nullptr != pRspInfo)
+	{
+		ptr2 = std::make_shared<CThostFtdcRspInfoField>(
+			CThostFtdcRspInfoField(*pRspInfo));
+	}
+
+	_ios.post(boost::bind(&traderctp::ProcessTradingAccountPasswordUpdate
+		, this, ptr1, ptr2));
+}
+
 void traderctp::ProcessRtnInstrumentStatus(std::shared_ptr<CThostFtdcInstrumentStatusField>
 	pInstrumentStatus)
 {
@@ -3356,6 +3685,24 @@ void traderctp::ReqQryTransferSerial()
 		.WithField("user_name",_req_login.user_name)
 		.WithField("ret",r)
 		.Log(LOG_INFO,"ctp ReqQryTransferSerial");
+}
+
+void traderctp::ReqChangeTradingAccountPassword(CtpChangeTradingAccountPassword& f)
+{
+	CThostFtdcTradingAccountPasswordUpdateField field;
+	memset(&field, 0, sizeof(field));
+	strcpy_x(field.BrokerID,m_broker_id.c_str());
+	strcpy_x(field.AccountID,f.account_id.c_str());
+	strcpy_x(field.OldPassword,f.old_password.c_str());
+	strcpy_x(field.NewPassword,f.new_password.c_str());
+	strcpy_x(field.CurrencyID,f.currency_id.c_str());
+	int r = m_pTdApi->ReqTradingAccountPasswordUpdate(&field,0);
+	Log().WithField("fun","ReqChangeTradingAccountPassword")
+		.WithField("key",_key)
+		.WithField("bid",_req_login.bid)
+		.WithField("user_name",_req_login.user_name)
+		.WithField("ret", r)
+		.Log(LOG_INFO, "ctp ReqQryTransferSerial");
 }
 
 void traderctp::ReqQryBank()
@@ -3673,11 +4020,12 @@ void traderctp::SendUserData()
 			//重算所有持仓项的持仓盈亏和浮动盈亏
 			double total_position_profit = 0;
 			double total_float_profit = 0;
+			double total_option_value = 0;
 			for (auto it = m_data.m_positions.begin();
 				it != m_data.m_positions.end(); ++it)
 			{
 				const std::string& symbol = it->first;
-				Position& ps = it->second;
+				Position& ps = it->second;				
 				if (nullptr == ps.ins)
 				{
 					ps.ins = GetInstrument(symbol);
@@ -3718,7 +4066,7 @@ void traderctp::SendUserData()
 						ps.position_profit_long = 0;
 						ps.position_profit_short = 0;
 						ps.position_profit = 0;
-
+						
 						ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 						ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 						ps.float_profit = ps.float_profit_long + ps.float_profit_short;
@@ -3727,6 +4075,11 @@ void traderctp::SendUserData()
 						{
 							ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 							ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{						
+								total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+							}
 						}
 						else
 						{
@@ -3738,6 +4091,11 @@ void traderctp::SendUserData()
 						{
 							ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 							ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+							}
 						}
 						else
 						{
@@ -3763,10 +4121,20 @@ void traderctp::SendUserData()
 					{
 						ps.last_price = last_price;
 
-						ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-						ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-						ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							ps.position_profit_long = 0;
+							ps.position_profit_short = 0;
+							ps.position_profit = 0;
+						}
+						else
+						{
+							ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+							ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+							ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+						}
+						
 						ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 						ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 						ps.float_profit = ps.float_profit_long + ps.float_profit_short;
@@ -3775,6 +4143,11 @@ void traderctp::SendUserData()
 						{
 							ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 							ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+							}
 						}
 						else
 						{
@@ -3786,6 +4159,11 @@ void traderctp::SendUserData()
 						{
 							ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 							ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+							}
 						}
 						else
 						{
@@ -3828,6 +4206,11 @@ void traderctp::SendUserData()
 							{
 								ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 								ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+								//如果是期权
+								if (ps.ins->product_class == kProductClassOptions)
+								{
+									total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+								}
 							}
 							else
 							{
@@ -3839,6 +4222,11 @@ void traderctp::SendUserData()
 							{
 								ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 								ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+								//如果是期权
+								if (ps.ins->product_class == kProductClassOptions)
+								{
+									total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+								}
 							}
 							else
 							{
@@ -3863,9 +4251,19 @@ void traderctp::SendUserData()
 						{
 							ps.last_price = last_price;
 
-							ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-							ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-							ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+							//如果是期权
+							if (ps.ins->product_class == kProductClassOptions)
+							{
+								ps.position_profit_long = 0;
+								ps.position_profit_short = 0;
+								ps.position_profit = 0;
+							}
+							else
+							{
+								ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+								ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+								ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+							}							
 
 							ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 							ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
@@ -3875,6 +4273,11 @@ void traderctp::SendUserData()
 							{
 								ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 								ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+								//如果是期权
+								if (ps.ins->product_class == kProductClassOptions)
+								{
+									total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+								}
 							}
 							else
 							{
@@ -3886,6 +4289,11 @@ void traderctp::SendUserData()
 							{
 								ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 								ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+								//如果是期权
+								if (ps.ins->product_class == kProductClassOptions)
+								{
+									total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+								}
 							}
 							else
 							{
@@ -3898,12 +4306,16 @@ void traderctp::SendUserData()
 						}						
 					}							
 				}
-							
-				if (IsValid(ps.position_profit))
+								
+				if (IsValid(ps.position_profit) && (ps.ins->product_class != kProductClassOptions))
+				{
 					total_position_profit += ps.position_profit;
-
-				if (IsValid(ps.float_profit))
+				}
+					
+				if (IsValid(ps.float_profit) && (ps.ins->product_class != kProductClassOptions))
+				{
 					total_float_profit += ps.float_profit;
+				}					
 			}
 
 			//重算资金账户
@@ -3954,10 +4366,12 @@ void traderctp::SendUserData()
 					acc.float_profit = total_float_profit;
 					acc.available += av_diff;
 					acc.balance += dv;
+					acc.value_balance= acc.balance + total_option_value;
 					if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
 						acc.risk_ratio = acc.margin / acc.balance;
 					else
 						acc.risk_ratio = NAN;
+
 					acc.changed = true;
 				}				
 			}
@@ -4039,6 +4453,7 @@ void traderctp::SendUserDataImd(int connectId)
 	//重算所有持仓项的持仓盈亏和浮动盈亏
 	double total_position_profit = 0;
 	double total_float_profit = 0;
+	double total_option_value = 0;
 	for (auto it = m_data.m_positions.begin();
 		it != m_data.m_positions.end(); ++it)
 	{
@@ -4093,6 +4508,11 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 					ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+					}
 				}
 				else
 				{
@@ -4104,6 +4524,11 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 					ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+					}
 				}
 				else
 				{
@@ -4129,10 +4554,20 @@ void traderctp::SendUserDataImd(int connectId)
 			{
 				ps.last_price = last_price;
 
-				ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-				ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-				ps.position_profit = ps.position_profit_long + ps.position_profit_short;
-
+				//如果是期权
+				if (ps.ins->product_class == kProductClassOptions)
+				{
+					ps.position_profit_long = 0;
+					ps.position_profit_short = 0;
+					ps.position_profit = 0;
+				}
+				else
+				{
+					ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+					ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+					ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+				}
+				
 				ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 				ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
 				ps.float_profit = ps.float_profit_long + ps.float_profit_short;
@@ -4141,6 +4576,11 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 					ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+					}
 				}
 				else
 				{
@@ -4152,6 +4592,11 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 					ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+					}
 				}
 				else
 				{
@@ -4194,6 +4639,11 @@ void traderctp::SendUserDataImd(int connectId)
 					{
 						ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 						ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+						}
 					}
 					else
 					{
@@ -4205,6 +4655,11 @@ void traderctp::SendUserDataImd(int connectId)
 					{
 						ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 						ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+						}
 					}
 					else
 					{
@@ -4229,9 +4684,19 @@ void traderctp::SendUserDataImd(int connectId)
 				{
 					ps.last_price = last_price;
 
-					ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
-					ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
-					ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+					//如果是期权
+					if (ps.ins->product_class == kProductClassOptions)
+					{
+						ps.position_profit_long = 0;
+						ps.position_profit_short = 0;
+						ps.position_profit = 0;
+					}
+					else
+					{
+						ps.position_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.position_cost_long;
+						ps.position_profit_short = ps.position_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
+						ps.position_profit = ps.position_profit_long + ps.position_profit_short;
+					}					
 
 					ps.float_profit_long = ps.last_price * ps.volume_long * ps.ins->volume_multiple - ps.open_cost_long;
 					ps.float_profit_short = ps.open_cost_short - ps.last_price * ps.volume_short * ps.ins->volume_multiple;
@@ -4241,6 +4706,12 @@ void traderctp::SendUserDataImd(int connectId)
 					{
 						ps.open_price_long = ps.open_cost_long / (ps.volume_long * ps.ins->volume_multiple);
 						ps.position_price_long = ps.position_cost_long / (ps.volume_long * ps.ins->volume_multiple);
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							total_option_value += ps.volume_long * ps.ins->volume_multiple*ps.last_price;
+						}
+
 					}
 					else
 					{
@@ -4252,6 +4723,11 @@ void traderctp::SendUserDataImd(int connectId)
 					{
 						ps.open_price_short = ps.open_cost_short / (ps.volume_short * ps.ins->volume_multiple);
 						ps.position_price_short = ps.position_cost_short / (ps.volume_short * ps.ins->volume_multiple);
+						//如果是期权
+						if (ps.ins->product_class == kProductClassOptions)
+						{
+							total_option_value -= ps.volume_short * ps.ins->volume_multiple*ps.last_price;
+						}
 					}
 					else
 					{
@@ -4265,10 +4741,10 @@ void traderctp::SendUserDataImd(int connectId)
 			}
 		}
 
-		if (IsValid(ps.position_profit))
+		if (IsValid(ps.position_profit) && (ps.ins->product_class != kProductClassOptions))
 			total_position_profit += ps.position_profit;
 
-		if (IsValid(ps.float_profit))
+		if (IsValid(ps.float_profit) && (ps.ins->product_class != kProductClassOptions))
 			total_float_profit += ps.float_profit;
 	}
 
@@ -4322,6 +4798,7 @@ void traderctp::SendUserDataImd(int connectId)
 			acc.float_profit = total_float_profit;
 			acc.available += av_diff;
 			acc.balance += dv;
+			acc.value_balance = acc.balance + total_option_value;
 			if (IsValid(acc.margin) && IsValid(acc.balance) && !IsZero(acc.balance))
 				acc.risk_ratio = acc.margin / acc.balance;
 			else
@@ -4839,6 +5316,28 @@ void traderctp::ProcessInMsg(int connId, std::shared_ptr<std::string> msg_ptr)
 			m_banks.clear();
 			m_need_query_bank.store(true);
 			m_need_query_register.store(true);	
+			NotifyContinueProcessMsg(false);
+			return;
+		}
+		else if (aid == "change_trading_account_password")
+		{
+			Log().WithField("fun", "ProcessInMsg")
+				.WithField("key", _key)
+				.WithField("bid", _req_login.bid)
+				.WithField("user_name", _req_login.user_name)
+				.WithField("connId", connId)
+				.Log(LOG_INFO, "trade ctp receive change_trading_account_password msg");
+
+			if (nullptr == m_pTdApi)
+			{
+				OutputNotifyAllSycn(362, u8"当前时间不支持修改资金密码!", "WARNING");
+				NotifyContinueProcessMsg(false);
+				return;
+			}
+
+			CtpChangeTradingAccountPassword d;
+			ssCtp.ToVar(d);
+			ReqChangeTradingAccountPassword(d);
 			NotifyContinueProcessMsg(false);
 			return;
 		}
@@ -5749,23 +6248,41 @@ void traderctp::OnClientReqTransfer(CThostFtdcReqTransferField f)
 }
 
 void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
-{
+{	
 	if (d.local_key.user_id.substr(0, _req_login.user_name.size()) != _req_login.user_name)
 	{
-		OutputNotifyAllSycn(353,u8"撤单user_id错误,不能撤单","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单user_id错误,不能撤单，";		
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(353,strNotify.c_str(),"WARNING");
 		return;
 	}
 
 	if (d.local_key.order_id.empty())
 	{
-		OutputNotifyAllSycn(354,u8"撤单指定的order_id不存在,不能撤单","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单指定的order_id不存在,不能撤单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(354,strNotify.c_str(),"WARNING");
 		return;
 	}
 	   
 	auto it = m_ordermap_local_remote.find(d.local_key);
 	if (it == m_ordermap_local_remote.end())
 	{
-		OutputNotifyAllSycn(354,u8"撤单指定的order_id不存在,不能撤单","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单指定的order_id不存在,不能撤单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(354, strNotify.c_str(), "WARNING");
 		return;
 	}
 	
@@ -5794,7 +6311,13 @@ void traderctp::OnClientReqCancelOrder(CtpActionCancelOrder d)
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
 	if (0 != r)
 	{
-		OutputNotifyAllSycn(355,u8"撤单请求发送失败!", "WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单请求发送失败，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(355,strNotify.c_str(),"WARNING");
 	}
 
 	SerializerLogCtp nss;
@@ -5820,9 +6343,80 @@ int traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 {
 	static int order_count = 0;
 
+	std::stringstream ss_1;
+	
+	std::string strInstrumentId = u8"合约代码:";
+	strInstrumentId += d.f.ExchangeID;
+	strInstrumentId += ".";
+	strInstrumentId +=d.f.InstrumentID;
+	ss_1 << strInstrumentId;
+
+	std::string strDirection = (d.f.Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+	ss_1 << u8"，" << strDirection;
+
+	std::string strOffsetFlag = "";
+	if (THOST_FTDC_OF_Open == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:开仓";
+	}
+	else if (THOST_FTDC_OF_Close == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平仓";
+	}
+	else if (THOST_FTDC_OF_ForceClose == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:强平";
+	}
+	else if (THOST_FTDC_OF_CloseToday == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平今";
+	}
+	else if (THOST_FTDC_OF_CloseYesterday == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平昨";
+	}
+	else if (THOST_FTDC_OF_ForceOff == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:强减";
+	}
+	else if (THOST_FTDC_OF_LocalForceClose == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:本地强平";
+	}
+	else
+	{
+		strOffsetFlag = u8"开平标志:未知";
+	}
+	ss_1 << u8"，" << strOffsetFlag;
+	
+	if (d.f.OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:市价" ;
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_BestPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:最优价";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:五档最优";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:"<< d.f.LimitPrice;
+	}
+	else
+	{
+		ss_1 << u8"，" << u8"委托价格:未知";
+	}
+	
+	ss_1 << u8"，" << u8"委托手数:" << d.f.VolumeTotalOriginal;
+	
 	if (d.local_key.user_id.substr(0, _req_login.user_name.size()) != _req_login.user_name)
 	{
-		OutputNotifyAllSycn(356,u8"报单user_id错误，不能下单", "WARNING");
+		std::string strNotify = u8"报单user_id错误，不能下单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(356,strNotify.c_str(),"WARNING");
 		return 0;
 	}
 
@@ -5852,9 +6446,11 @@ int traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 	auto it = m_ordermap_local_remote.find(d.local_key);
 	if (it != m_ordermap_local_remote.end())
 	{
+		std::string strNotify = u8"报单单号重复，不能下单，";
+		strNotify += ss_1.str();
 		OutputNotifyAllSycn(357
-			, u8"报单单号重复，不能下单"
-			, "WARNING");
+			,strNotify.c_str()
+			,"WARNING");
 		return 0;
 	}
 	
@@ -5909,7 +6505,9 @@ int traderctp::OnClientReqInsertOrder(CtpActionInsertOrder d)
 		std::string strMsg = "";
 		nss.ToString(&strMsg);
 
-		OutputNotifyAllSycn(358,u8"下单请求发送失败!", "WARNING");
+		std::string strNotify = u8"下单请求发送失败，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(358,strNotify.c_str(),"WARNING");
 
 		Log().WithField("fun", "OnClientReqInsertOrder")
 			.WithField("key", _key)
@@ -9792,13 +10390,25 @@ void traderctp::OnConditionOrderReqCancelOrder(CtpActionCancelOrder& d)
 	
 	if (nullptr == m_pTdApi)
 	{
-		OutputNotifyAllSycn(334,u8"当前时间不支持撤单!","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"当前时间不支持撤单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(334, strNotify.c_str(),"WARNING");
 		return;
 	}
 	int r = m_pTdApi->ReqOrderAction(&d.f, 0);
 	if (0 != r)
 	{
-		OutputNotifyAllSycn(355,u8"撤单请求发送失败!","WARNING");
+		std::stringstream ss_1;
+		ss_1 << u8"撤单信息";
+		ss_1 << u8"，用户名:" << d.local_key.user_id;
+		ss_1 << u8"，报单编号:" << d.local_key.order_id;
+		std::string strNotify = u8"撤单请求发送失败，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(355,strNotify.c_str(),"WARNING");
 		Log().WithField("fun","OnConditionOrderReqCancelOrder")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)
@@ -9835,6 +10445,75 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 	rkey.front_id = m_front_id;
 	rkey.order_ref = std::to_string(m_order_ref++);
 
+	std::stringstream ss_1;
+
+	std::string strInstrumentId = u8"合约代码:";
+	strInstrumentId += d.f.ExchangeID;
+	strInstrumentId += ".";
+	strInstrumentId += d.f.InstrumentID;
+	ss_1 <<strInstrumentId;
+
+	std::string strDirection = (d.f.Direction == THOST_FTDC_D_Buy) ? u8"下单方向:买" : u8"下单方向:卖";
+	ss_1 << u8"，" << strDirection;
+
+	std::string strOffsetFlag = "";
+	if (THOST_FTDC_OF_Open == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:开仓";
+	}
+	else if (THOST_FTDC_OF_Close == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平仓";
+	}
+	else if (THOST_FTDC_OF_ForceClose == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:强平";
+	}
+	else if (THOST_FTDC_OF_CloseToday == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平今";
+	}
+	else if (THOST_FTDC_OF_CloseYesterday == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:平昨";
+	}
+	else if (THOST_FTDC_OF_ForceOff == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:强减";
+	}
+	else if (THOST_FTDC_OF_LocalForceClose == d.f.CombOffsetFlag[0])
+	{
+		strOffsetFlag = u8"开平标志:本地强平";
+	}
+	else
+	{
+		strOffsetFlag = u8"开平标志:未知";
+	}
+	ss_1 << u8"，" << strOffsetFlag;
+
+	if (d.f.OrderPriceType == THOST_FTDC_OPT_AnyPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:市价";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_BestPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:最优价";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_FiveLevelPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:五档最优";
+	}
+	else if (d.f.OrderPriceType == THOST_FTDC_OPT_LimitPrice)
+	{
+		ss_1 << u8"，" << u8"委托价格:" << d.f.LimitPrice;
+	}
+	else
+	{
+		ss_1 << u8"，" << u8"委托价格:未知";
+	}
+
+	ss_1 << u8"，" << u8"委托手数:" << d.f.VolumeTotalOriginal;
+		
 	//客户端没有提供订单编号
 	if (d.local_key.order_id.empty())
 	{
@@ -9881,13 +10560,17 @@ void traderctp::OnConditionOrderReqInsertOrder(CtpActionInsertOrder& d)
 	
 	if (nullptr == m_pTdApi)
 	{
-		OutputNotifyAllSycn(333,u8"当前时间不支持下单!","WARNING");
+		std::string strNotify = u8"当前时间不支持下单，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(333,strNotify.c_str(),"WARNING");
 		return;
 	}
 	int r = m_pTdApi->ReqOrderInsert(&d.f, 0);	
 	if (0 != r)
 	{		
-		OutputNotifyAllSycn(358,u8"下单请求发送失败!","WARNING");
+		std::string strNotify = u8"下单请求发送失败，";
+		strNotify += ss_1.str();
+		OutputNotifyAllSycn(358,strNotify.c_str(),"WARNING");
 		Log().WithField("fun","OnConditionOrderReqInsertOrder")
 			.WithField("key",_key)
 			.WithField("bid",_req_login.bid)

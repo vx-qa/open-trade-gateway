@@ -7,28 +7,40 @@
 #include "trade_server.h"
 #include "config.h"
 #include "http.h"
-
+#include "version.h"
 #include <iostream>
 #include <string>
 #include <atomic>
 #include <boost/asio.hpp>
 #include <boost/process.hpp>
+#include <boost/stacktrace.hpp>
 
 boost::interprocess::managed_shared_memory* m_segment= nullptr;
 ShmemAllocator* m_alloc_inst = nullptr;
 InsMapType* m_ins_map = nullptr;
-const char* ins_file_url = "http://openmd.shinnytech.com/t/md/symbols/latest.json";
 
 bool LoadInsList();
+
+void FreeInstList();
+
+void dump_execinfo();
+
+bool otg_already_running(const char* procname);
 
 int main(int argc, char* argv[])
 {
 	try
 	{
-		Log().WithField("fun","main")
-			.WithField("key","gateway")
-			.Log(LOG_INFO,"trade server init");
-			
+		if (otg_already_running("open-trade-gateway"))
+		{			
+			std::cout << VERSION_STR <<std::endl;
+			return -1;
+		}
+
+		Log().WithField("fun", "main")
+			.WithField("key", "gateway")
+			.Log(LOG_INFO, "trade server init");
+							
 		//加载配置文件
 		if (!LoadConfig())
 		{
@@ -73,22 +85,26 @@ int main(int argc, char* argv[])
 		#endif 
 		signals_.async_wait(
 			[&s,&ios,&md_child,&flag](boost::system::error_code, int sig)
-		{				
-			Log().WithField("fun","main")
-				.WithField("key","gateway")
-				.WithField("sig",sig)
-				.Log(LOG_INFO,"trade_server got sig");
+		{			
+			Log().WithField("fun", "main")
+				.WithField("key", "gateway")
+				.WithField("sig", sig)
+				.Log(LOG_INFO, "trade_server got sig");
 
-			s.stop();	
 			flag.store(false);
-			ios.stop();
-
+												
+			s.stop();			
+			
 			md_child.terminate();
 			md_child.wait();
 			
-			Log().WithField("fun","main")
-				.WithField("key","gateway")				
-				.Log(LOG_INFO,"trade_server exit");			
+			FreeInstList();
+			
+			ios.stop();
+
+			Log().WithField("fun", "main")
+				.WithField("key", "gateway")
+				.Log(LOG_INFO, "trade_server exit");
 		});
 		
 		while (flag.load())
@@ -98,8 +114,18 @@ int main(int argc, char* argv[])
 				ios.run();
 				break;
 			}
+			catch (std::bad_alloc& bd)
+			{
+				dump_execinfo();
+				Log().WithField("fun","main")
+					.WithField("key","gateway")
+					.WithField("errmsg",bd.what())
+					.Log(LOG_WARNING, "ios run exception");
+				break;
+			}
 			catch(std::exception& ex)
 			{
+				dump_execinfo();
 				Log().WithField("fun","main")
 					.WithField("key","gateway")
 					.WithField("errmsg",ex.what())
@@ -139,10 +165,14 @@ public:
 	}
 };
 
+bool GetInstListFromOldService();
+
+bool GetInstListFromNewService();
+
 bool LoadInsList()
 {
 	try
-	{
+	{		
 		boost::interprocess::shared_memory_object::remove("InsMapSharedMemory");
 
 		m_segment = new boost::interprocess::managed_shared_memory
@@ -162,16 +192,65 @@ bool LoadInsList()
 			m_segment->construct<InsMapType>("InsMap")//object name
 			(CharArrayComparer() //first  ctor parameter
 				, *m_alloc_inst);     //second ctor parameter		
+
+		Log().WithField("fun", "LoadInsList")
+			.WithField("key", "gateway")
+			.Log(LOG_INFO, "trade_server construct m_ins_map success");
 	}
 	catch (std::exception& ex)
 	{
 		Log().WithField("fun", "LoadInsList")
 			.WithField("key", "gateway")
 			.WithField("errmsg", ex.what())
-			.Log(LOG_FATAL, "mdservice construct m_ins_map fail");
+			.Log(LOG_FATAL, "trade_server construct m_ins_map fail");
 		return false;
 	}
 
+	if (g_config.use_new_inst_service)
+	{
+		return GetInstListFromNewService();
+	}
+	else
+	{
+		return GetInstListFromOldService();
+	}	
+}
+
+void FreeInstList()
+{
+	try
+	{
+		if (nullptr != m_segment)
+		{
+			m_segment->destroy<InsMapType>("InsMap");
+			m_ins_map = nullptr;
+			if (nullptr != m_alloc_inst)
+			{
+				delete m_alloc_inst;
+				m_alloc_inst = nullptr;
+			}
+			delete m_segment;
+			m_segment = nullptr;
+		}
+		boost::interprocess::shared_memory_object::remove("InsMapSharedMemory");
+
+		Log().WithField("fun", "FreeInstList")
+			.WithField("key", "gateway")		
+			.Log(LOG_INFO, "trade_server destroy m_ins_map success");
+	}
+	catch (std::exception& ex)
+	{
+		dump_execinfo();
+		Log().WithField("fun", "FreeInstList")
+			.WithField("key", "gateway")
+			.WithField("errmsg", ex.what())
+			.Log(LOG_FATAL, "trade_server destroy m_ins_map fail");		
+	}
+}
+
+bool GetInstListFromOldService()
+{
+	const char* ins_file_url = "http://openmd.shinnytech.com/t/md/symbols/latest.json";
 	try
 	{
 		//下载和加载合约表文件
@@ -179,24 +258,24 @@ bool LoadInsList()
 		long ret = HttpGet(ins_file_url, &content);
 		if (ret != 0)
 		{
-			Log().WithField("fun", "LoadInsList")
-				.WithField("key", "gateway")
-				.WithField("ret", (int)ret)
-				.Log(LOG_FATAL, "md service download ins file fail");
+			Log().WithField("fun","GetInstListFromOldService")
+				.WithField("key","gateway")
+				.WithField("ret",(int)ret)
+				.Log(LOG_FATAL,"md service download ins file fail");
 			return false;
 		}
 
-		Log().WithField("fun", "LoadInsList")
-			.WithField("key", "gateway")
-			.WithField("msglen", (int)content.length())
-			.Log(LOG_INFO, "mdservice download ins file success");
+		Log().WithField("fun","GetInstListFromOldService")
+			.WithField("key","gateway")
+			.WithField("msglen",(int)content.length())
+			.Log(LOG_INFO,"mdservice download ins file success");
 
 		InsFileParser ss;
 		if (!ss.FromString(content.c_str()))
 		{
-			Log().WithField("fun", "LoadInsList")
-				.WithField("key", "gateway")
-				.Log(LOG_FATAL, "md service parse downloaded ins file fail");
+			Log().WithField("fun","GetInstListFromOldService")
+				.WithField("key","gateway")
+				.Log(LOG_FATAL,"md service parse downloaded ins file fail");
 			return false;
 		}
 
@@ -209,12 +288,85 @@ bool LoadInsList()
 	}
 	catch (std::exception& ex)
 	{
-		Log().WithField("fun", "LoadInsList")
-			.WithField("key", "gateway")
-			.WithField("errmsg", ex.what())
-			.Log(LOG_FATAL, "get inst list fail");
+		Log().WithField("fun","GetInstListFromOldService")
+			.WithField("key","gateway")
+			.WithField("errmsg",ex.what())
+			.Log(LOG_FATAL,"get inst list fail");
 		return false;
 	}
 
 	return true;
+}
+
+bool GetInstListFromNewService()
+{
+	return false;
+}
+
+static int lockfile(int fd)
+{
+	struct flock fl;
+	fl.l_type = F_WRLCK;
+	fl.l_start = 0;
+	fl.l_whence = SEEK_SET;
+	fl.l_len = 0;
+	return(fcntl(fd,F_SETLK, &fl));
+}
+
+bool otg_already_running(const char* procname)
+{
+	int  fd;
+	char buf[16];
+	char filename[100];
+	sprintf(filename,"/var/run/%s.pid",procname);
+
+	fd = open(filename, O_RDWR | O_CREAT, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+	if (fd < 0) 
+	{
+		std::cout << "open pid file fail!" << std::endl;
+		return true;
+	}
+
+	if (lockfile(fd) == -1)
+	{
+		close(fd);
+		std::cout << "lock pid file fail!" << std::endl;
+		return true;
+	}
+	else
+	{
+		ftruncate(fd, 0);
+		sprintf(buf,"%ld\n", (long)getpid());
+		write(fd,buf,strlen(buf)+1);
+		return false;
+	}
+}
+
+#include <execinfo.h>
+
+void dump_execinfo()
+{
+	#define BACKTRACE_SIZE   16
+	
+	void *buffer[BACKTRACE_SIZE];
+	char **strings;
+
+	int nptrs = backtrace(buffer,BACKTRACE_SIZE);
+	strings = backtrace_symbols(buffer,nptrs);
+	if (nullptr ==strings )
+	{
+		Log().WithField("fun", "dump_execinfo")
+			.WithField("key", "gateway")
+			.Log(LOG_INFO, "dump_execinfo strings is nullptr");
+		return;
+	}
+
+	for (int j = 0; j < nptrs; j++)
+	{
+		Log().WithField("fun","dump_execinfo")
+			.WithField("key","gateway")
+			.WithField("j",j)
+			.WithField("str",strings[j])
+			.Log(LOG_INFO, "dump_execinfo strings");
+	}
 }

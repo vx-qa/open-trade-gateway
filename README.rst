@@ -54,7 +54,9 @@ Config
       "host": "0.0.0.0",                                      //提供服务的IP地址  
       "port": 7788,                                           //提供服务的端口号
       "auto_confirm_settlement": false,                       //是否自动确认结算单
-      "user_file_path": "/var/local/lib/open-trade-gateway"   //存放用户文件的目录，必须事先创建好
+      "user_file_path": "/var/local/lib/open-trade-gateway",  //存放用户文件的目录，必须事先创建好
+      "log_price_info":true,                       			  //是否打印行情日志
+      "use_new_inst_service":false				   			  //是否启用新版的合约服务
     }
 
 
@@ -113,7 +115,7 @@ Test
 
 1、首先按上述配置步骤在一台或者多台服务器上配置一个或者多个open_trade_gateway实例; 
 
-2、按下面的配置文件(文件名config-ms.json,需要安装在/etc/open-trade-gateway/下)的说明配置负载均衡服务器;
+2、按下面的配置文件(文件名config-ms.json,需要安装在/etc/open-trade-gateway/下)的说明配置负载均衡服务器结点;
 ::
 
 	{
@@ -124,28 +126,37 @@ Test
 			"name":"135",//结点名称,不能重复
 			"host":"192.168.1.35",//open_trade_gateway实例的IP地址
 			"port":"7788", //open_trade_gateway实例的端口号(注意:这里是字符串)
-			"path":"/" //open_trade_gateway实例的路径,默认为"/"
+			"path":"/", //open_trade_gateway实例的路径,默认为"/"
+			"bids": ["simnow","nhqhsopt"]   //bid名称列表,来自于broker_list.json的name字段
 		},
 		{
 			"name":"136",
 			"host":"192.168.1.36",
 			"port":"7788",
-			"path":"/"
+			"path":"/",
+			"bids": ["simnow","shzq"] 
 		},
 		{
 			"name":"137",
 			"host":"192.168.1.37",
 			"port":"7788",
 			"path":"/",
+			"bids": ["simnow","simsy"] 
 		}
 		]
 	}
 
-3、上述多个open_trade_gateway实例的broker list的bid配置不可重复,如果重复,按步骤2中结点配置的顺序,先出现的有效,后出现的忽略;
+3、上述配置的负载均衡服务器结点名称不可重复,如果重复,按步骤2中结点配置的顺序,先出现的有效,后出现的忽略;
 
-4、首先正确启动上述结点上的open_trade_gateway实例,最后启动负载均衡服务器open-trade-gateway-ms;
+4、一个bid可以出现在一个或者多个结点的bid名称列表中,如果一个bid只出现在一个结点中,则该bid的用户只会分配到该结点中;
 
-5、采用DIFF协议的客户端应用连接open-trade-gateway-ms的服务端口(上例中的5566)发送请求,open-trade-gateway-ms会根据请求的bid自动将请求转发到不同的open-trade-gateway结点进行处理,实现负载均衡;
+5、如果一个bid出现在多个结点中,则该bid的用户会分别分配到不同的结点中,按当时总用户最少优先的原则分配;
+
+6、如果一个bid没有出现在任何结点中,则该bid的用户会在所有结点中进行分配,按当时总用户最少优先的原则分配;
+
+7、首先正确启动上述结点上的open_trade_gateway实例,最后启动负载均衡服务器open-trade-gateway-ms;
+
+8、采用DIFF协议的客户端应用连接open-trade-gateway-ms的服务端口(上例中的5566)发送请求,open-trade-gateway-ms会根据请求的bid自动将请求转发到不同的open-trade-gateway结点进行处理,实现负载均衡;
 
 条件单服务配置
 -------------------------------------------------
@@ -172,11 +183,11 @@ Test
   {"weekday":5,"timespan":[{"begin":235,"end":240},{"begin":1535,"end":1540}]},
   {"weekday":6,"timespan":[{"begin":235,"end":240}]}
   ],
-  "auto_restart_process_time":  [{"weekday":1,"timespan":[{"begin":900,"end":1530}]},
-  {"weekday":2,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
-  {"weekday":3,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
-  {"weekday":4,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
-  {"weekday":5,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530}]},
+  "auto_restart_process_time":  [{"weekday":1,"timespan":[{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":2,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":3,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":4,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
+  {"weekday":5,"timespan":[{"begin":0,"end":230},{"begin":900,"end":1530},{"begin":2100,"end":2359}]},
   {"weekday":6,"timespan":[{"begin":0,"end":230}]}
   ]
  }

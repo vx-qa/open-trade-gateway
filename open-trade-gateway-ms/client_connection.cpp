@@ -657,91 +657,207 @@ std::string client_connection::GetUserKey(const ReqLogin& req, const BrokerConfi
 	return strUserKey;
 }
 
-void client_connection::SaveMsConfig(const std::string& userKey)
+void client_connection::SaveMsUsersConfig(const std::string& userKey)
 {
-	std::string fn = "/etc/open-trade-gateway/config-ms.json";
+	std::string fn = "/etc/open-trade-gateway/ms-users.json";
 	MasterSerializerConfig ss;
-	ss.FromVar(_masterConfig);
+	ss.FromVar(_masterConfig.usersConfig);
 	bool saveFile = ss.ToFile(fn.c_str());
 	if (!saveFile)
 	{
-		LogMs().WithField("fun","SaveMsConfig")
+		LogMs().WithField("fun","SaveMsUsersConfig")
 			.WithField("key","gatewayms")	
 			.WithField("user_key",userKey)
 			.WithField("fileName",fn)
-			.Log(LOG_INFO, "save ms config file failed!");
+			.Log(LOG_INFO, "save ms-users.json file failed!");
 	}	
 }
 
-bool client_connection::GetSlaveNodeInfoFromUserKey(const std::string& bid,const std::string& userKey,SlaveNodeInfo& slaveNodeInfo)
+bool client_connection::GetSlaveNodeInfoFromUserKey(const std::string& bid,const std::string& userKey
+	,SlaveNodeInfo& slaveNodeInfo)
 {
 	TUserSlaveNodeMap::iterator it=_masterConfig.users_slave_node_map.find(userKey);
 	//还没有为用户分配结点
 	if (it == _masterConfig.users_slave_node_map.end())
-	{
-		TBidSlaveNodeMap::iterator it=_masterConfig.bids_slave_node_map.find(bid);
-		if (it == _masterConfig.bids_slave_node_map.end())
+	{		
+		TBidSlaveNodeMap::iterator it2 = _masterConfig.bids_slave_node_map.find(bid);
+		//该bid没有指定的结点,则为该用户选择当前用户最少的结点
+		if (it2 == _masterConfig.bids_slave_node_map.end())
 		{
-			return false;
-		}
-		std::vector<std::string>& nodeList = it->second;
-		if (0== nodeList.size())
-		{
-			return false;
-		}
-		else if (1 == nodeList.size())
-		{
-			for (auto& s : _masterConfig.slaveNodeList)
-			{
-				if (s.name == nodeList[0])
-				{
-					slaveNodeInfo.name = s.name;
-					slaveNodeInfo.host = s.host;
-					slaveNodeInfo.path = s.path;
-					slaveNodeInfo.port = s.port;
-					s.userList.push_back(userKey);
-					SaveMsConfig(userKey);
-					_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
-						userKey,slaveNodeInfo));
-					return true;
-				}
-			}
-			return false;
-		}
-		else
-		{			
 			int nCount = std::numeric_limits<int>::max();
 			int index = -1;
-			for (int i = 0; i < _masterConfig.slaveNodeList.size(); ++i)
+			for (int i = 0; i < _masterConfig.usersConfig.slaveNodeUserInfoList.size(); ++i)
 			{
-				for (auto& n : nodeList)
+				if (_masterConfig.usersConfig.slaveNodeUserInfoList[i].users.size() < nCount)
 				{
-					if (_masterConfig.slaveNodeList[i].name == n)
-					{
-						if (_masterConfig.slaveNodeList[i].userList.size() < nCount)
-						{
-							index = i;
-							nCount = _masterConfig.slaveNodeList[i].userList.size();
-						}
-					}
+					index = i;
+					nCount = _masterConfig.usersConfig.slaveNodeUserInfoList[i].users.size();
 				}
 			}
-
+			
+			//如果没有找到结点
 			if (index < 0)
 			{
 				return false;
 			}
 
-			_masterConfig.slaveNodeList[index].userList.push_back(userKey);
-			SaveMsConfig(userKey);			
-			slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
-			slaveNodeInfo.host = _masterConfig.slaveNodeList[index].host;
-			slaveNodeInfo.path = _masterConfig.slaveNodeList[index].path;
-			slaveNodeInfo.port = _masterConfig.slaveNodeList[index].port;
-			_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
-				userKey, slaveNodeInfo));
-			return true;
-		}		
+			bool flag = false;
+			std::string nodeName = _masterConfig.usersConfig.slaveNodeUserInfoList[index].name;
+			for (auto & n : _masterConfig.slaveNodeList)
+			{
+				if (n.name == nodeName)
+				{
+					flag = true;
+
+					_masterConfig.usersConfig.slaveNodeUserInfoList[index].users.push_back(userKey);
+					SaveMsUsersConfig(userKey);
+					slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
+					slaveNodeInfo.host = _masterConfig.slaveNodeList[index].host;
+					slaveNodeInfo.path = _masterConfig.slaveNodeList[index].path;
+					slaveNodeInfo.port = _masterConfig.slaveNodeList[index].port;
+					_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+						userKey, slaveNodeInfo));
+
+					break;
+				}
+			}
+			
+			return flag;			
+		}
+		//如果为该bid指定了结点
+		else
+		{
+			std::vector<std::string>& nodeList = it2->second;
+			//指定的结点数为0,和没有指定是一样的,则为该用户选择当前用户最少的结点
+			if (0 == nodeList.size())
+			{
+				int nCount = std::numeric_limits<int>::max();
+				int index = -1;
+				for (int i = 0; i < _masterConfig.usersConfig.slaveNodeUserInfoList.size(); ++i)
+				{
+					if (_masterConfig.usersConfig.slaveNodeUserInfoList[i].users.size() < nCount)
+					{
+						index = i;
+						nCount = _masterConfig.usersConfig.slaveNodeUserInfoList[i].users.size();
+					}
+				}
+
+				//如果没有找到结点
+				if (index < 0)
+				{
+					return false;
+				}
+
+				bool flag = false;
+				std::string nodeName = _masterConfig.usersConfig.slaveNodeUserInfoList[index].name;
+				for (auto & n : _masterConfig.slaveNodeList)
+				{
+					if (n.name == nodeName)
+					{
+						flag = true;
+
+						_masterConfig.usersConfig.slaveNodeUserInfoList[index].users.push_back(userKey);
+						SaveMsUsersConfig(userKey);
+						slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
+						slaveNodeInfo.host = _masterConfig.slaveNodeList[index].host;
+						slaveNodeInfo.path = _masterConfig.slaveNodeList[index].path;
+						slaveNodeInfo.port = _masterConfig.slaveNodeList[index].port;
+						_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+							userKey, slaveNodeInfo));
+
+						break;
+					}
+				}
+
+				return flag;
+			}
+			//指定了唯一结点,别无选择
+			else if (1 == nodeList.size())
+			{
+				std::string nodeName = nodeList[0];
+				int index = -1;
+				for (int i = 0; i < _masterConfig.usersConfig.slaveNodeUserInfoList.size(); ++i)
+				{
+					if (_masterConfig.usersConfig.slaveNodeUserInfoList[i].name== nodeName)
+					{
+						index = i;
+						break;
+					}
+				}
+				//如果没有找到结点
+				if (index < 0)
+				{
+					return false;
+				}
+				
+
+				bool flag = false;
+				for (auto & n : _masterConfig.slaveNodeList)
+				{
+					if (n.name == nodeName)
+					{
+						flag = true;
+						_masterConfig.usersConfig.slaveNodeUserInfoList[index].users.push_back(userKey);
+						SaveMsUsersConfig(userKey);
+						slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
+						slaveNodeInfo.host = _masterConfig.slaveNodeList[index].host;
+						slaveNodeInfo.path = _masterConfig.slaveNodeList[index].path;
+						slaveNodeInfo.port = _masterConfig.slaveNodeList[index].port;
+						_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+							userKey, slaveNodeInfo));
+						break;
+					}
+				}
+
+				return flag;
+			}
+			//指定了多个结点,从中选择当前用户最少的结点
+			else
+			{
+				int nCount = std::numeric_limits<int>::max();
+				int index = -1;
+				for (int i = 0; i < _masterConfig.usersConfig.slaveNodeUserInfoList.size(); ++i)
+				{
+					for (auto& n : nodeList)
+					{
+						if (_masterConfig.usersConfig.slaveNodeUserInfoList[i].name == n)
+						{
+							if (_masterConfig.usersConfig.slaveNodeUserInfoList[i].users.size() < nCount)
+							{
+								index = i;
+								nCount = _masterConfig.usersConfig.slaveNodeUserInfoList[i].users.size();
+							}
+						}
+					}
+				}
+
+				//如果没有找到结点
+				if (index < 0)
+				{
+					return false;
+				}
+
+				bool flag = false;
+				std::string nodeName = _masterConfig.usersConfig.slaveNodeUserInfoList[index].name;
+				for (auto & n : _masterConfig.slaveNodeList)
+				{
+					if (n.name == nodeName)
+					{
+						flag = true;
+						_masterConfig.usersConfig.slaveNodeUserInfoList[index].users.push_back(userKey);
+						SaveMsUsersConfig(userKey);
+						slaveNodeInfo.name = _masterConfig.slaveNodeList[index].name;
+						slaveNodeInfo.host = _masterConfig.slaveNodeList[index].host;
+						slaveNodeInfo.path = _masterConfig.slaveNodeList[index].path;
+						slaveNodeInfo.port = _masterConfig.slaveNodeList[index].port;
+						_masterConfig.users_slave_node_map.insert(TUserSlaveNodeMap::value_type(
+							userKey, slaveNodeInfo));
+						break;
+					}
+				}
+				return flag;
+			}
+		}			
 	}
 	//已经为用户分配结点
 	else
